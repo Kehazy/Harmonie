@@ -1,0 +1,291 @@
+/* Harmonie — a clean Spicetify theme inspired by Apple Music */
+
+:root {
+  --harmonie-font: -apple-system, "SF Pro Display", "SF Pro Text", "Segoe UI Variable Display",
+    "Segoe UI Variable", "Inter", "Segoe UI", system-ui, sans-serif;
+  --harmonie-radius: 12px;
+  --harmonie-radius-sm: 8px;
+  --harmonie-glass: rgba(var(--spice-rgb-main), 0.62);
+  --harmonie-glass-strong: rgba(var(--spice-rgb-main), 0.8);
+  --harmonie-hover: rgba(var(--spice-rgb-text), 0.07);
+  --harmonie-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* ---------- Typography ---------- */
+body,
+button,
+input,
+textarea,
+.encore-text,
+.main-type-mesto,
+.main-type-ballad,
+.main-type-canon,
+.main-type-alto {
+  font-family: var(--harmonie-font) !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+.main-entityHeader-title h1,
+.main-entityHeader-title .encore-text,
+h1.encore-text {
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+}
+
+/* ---------- Blurred background from the album art ---------- */
+.Root__top-container {
+  isolation: isolate;
+  background-color: var(--spice-main) !important;
+}
+
+.Root__top-container::before {
+  content: "";
+  position: fixed;
+  inset: -120px;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--harmonie-art, none);
+  background-size: cover;
+  background-position: center;
+  filter: blur(110px) saturate(1.8);
+  opacity: 0.38;
+  transition: background-image 0.8s var(--harmonie-ease);
+}
+
+/* Translucent panels */
+.Root__nav-bar,
+.Root__main-view,
+.Root__right-sidebar {
+  background: transparent !important;
+}
+
+.Root__nav-bar > *,
+.Root__main-view > div,
+.Root__right-sidebar > * {
+  background-color: var(--harmonie-glass) !important;
+  border-radius: var(--harmonie-radius) !important;
+}
+
+.main-view-container,
+.main-view-container__scroll-node,
+.main-yourLibraryX-library,
+.main-yourLibraryX-entryPoints {
+  background-color: transparent !important;
+}
+
+.main-entityHeader-backgroundColor,
+.main-entityHeader-overlay,
+.main-actionBarBackground-background,
+.main-home-homeHeader {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Frosted glass top bar */
+.main-topBar-background {
+  background-color: var(--harmonie-glass-strong) !important;
+  backdrop-filter: blur(30px) saturate(1.6);
+}
+
+.Root__globalNav {
+  background: transparent !important;
+}
+
+/* ---------- Bottom player as a floating card ---------- */
+.Root__now-playing-bar {
+  background: transparent !important;
+  padding: 0 8px 8px;
+}
+
+.main-nowPlayingBar-container,
+.Root__now-playing-bar footer {
+  background-color: var(--harmonie-glass-strong) !important;
+  backdrop-filter: blur(40px) saturate(1.8);
+  border-radius: 16px !important;
+  border: 1px solid rgba(var(--spice-rgb-text), 0.06);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.main-nowPlayingWidget-coverArt img,
+.main-nowPlayingWidget-coverArt .cover-art,
+.main-coverSlotCollapsed-container img {
+  border-radius: 6px !important;
+}
+
+/* Accent-colored progress and volume bars */
+.progress-bar {
+  --fg-color: var(--spice-button) !important;
+  --is-active-fg-color: var(--spice-button) !important;
+  --bg-color: rgba(var(--spice-rgb-text), 0.18) !important;
+}
+
+/* Main play button */
+.main-playButton-PlayButton button,
+.main-playButton-PlayButton > button > span,
+[data-testid="play-button"] > span,
+.encore-bright-accent-set {
+  --background-base: var(--spice-button) !important;
+  --background-highlight: var(--spice-button-active) !important;
+  --background-press: var(--spice-button-active) !important;
+  color: #fff !important;
+}
+
+[data-testid="control-button-playpause"] {
+  background-color: var(--spice-text) !important;
+  color: var(--spice-main) !important;
+  transition: transform 0.15s var(--harmonie-ease);
+}
+
+[data-testid="control-button-playpause"]:hover {
+  transform: scale(1.06);
+}
+
+/* Active buttons (shuffle, repeat, like) in accent color */
+.main-shuffleButton-button[aria-checked="true"],
+.main-repeatButton-button[aria-checked="true"],
+[data-testid="control-button-shuffle"][aria-checked="true"],
+[data-testid="control-button-repeat"][aria-checked="true"],
+.main-addButton-active {
+  color: var(--spice-button) !important;
+}
+
+/* ---------- Covers and cards ---------- */
+.main-image-image,
+.main-cardImage-image,
+.main-cardImage-imageWrapper,
+.main-entityHeader-image,
+.main-entityHeader-imagePlaceholder {
+  border-radius: var(--harmonie-radius-sm) !important;
+}
+
+.main-cardImage-circular,
+.main-cardImage-circular img,
+.main-entityHeader-shape-circle,
+.main-entityHeader-image.main-entityHeader-circle {
+  border-radius: 50% !important;
+}
+
+.main-entityHeader-image,
+.main-entityHeader-imagePlaceholder {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35) !important;
+}
+
+.main-card-card {
+  background: transparent !important;
+  border-radius: var(--harmonie-radius) !important;
+  transition: background-color 0.2s var(--harmonie-ease), transform 0.2s var(--harmonie-ease);
+}
+
+.main-card-card:hover {
+  background: var(--harmonie-hover) !important;
+}
+
+.main-card-card:hover .main-cardImage-imageWrapper {
+  transform: scale(1.02);
+  transition: transform 0.25s var(--harmonie-ease);
+}
+
+/* ---------- Track lists ---------- */
+.main-trackList-trackListRow {
+  border-radius: var(--harmonie-radius-sm) !important;
+}
+
+.main-trackList-trackListRow:hover,
+.main-trackList-trackListRow:focus-within {
+  background-color: var(--harmonie-hover) !important;
+}
+
+.main-trackList-trackListRow[aria-selected="true"],
+.main-trackList-selected {
+  background-color: rgba(var(--spice-rgb-button), 0.16) !important;
+}
+
+.main-trackList-playingIcon,
+.main-trackList-rowTitle[data-encore-id][style*="color"],
+.main-trackList-active .main-trackList-rowTitle {
+  color: var(--spice-button) !important;
+}
+
+.main-trackList-trackListHeader {
+  background-color: transparent !important;
+  border-bottom: 1px solid rgba(var(--spice-rgb-text), 0.08);
+}
+
+/* ---------- Library (sidebar) ---------- */
+.main-yourLibraryX-listItem,
+.main-yourLibraryX-listItemGroup [role="row"] > div,
+.main-rootlist-rootlistItem {
+  border-radius: var(--harmonie-radius-sm) !important;
+}
+
+.main-yourLibraryX-listItem:hover,
+.main-rootlist-rootlistItem:hover {
+  background-color: var(--harmonie-hover) !important;
+}
+
+/* Filter chips */
+.main-yourLibraryX-filterArea button > span,
+.search-searchCategory-categoryGrid button > span,
+[role="checkbox"] > span.encore-text,
+.ChipInner,
+.ChipInnerComponent {
+  border-radius: 999px !important;
+}
+
+/* Search field */
+.x-searchInput-searchInputInput,
+[data-testid="search-input"] {
+  border-radius: 10px !important;
+  background-color: rgba(var(--spice-rgb-text), 0.08) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- Menus and dialogs ---------- */
+.main-contextMenu-menu,
+.main-contextMenu-tippy,
+.GenericModal,
+.main-trackCreditsModal-container {
+  background-color: var(--harmonie-glass-strong) !important;
+  backdrop-filter: blur(40px) saturate(1.8);
+  border-radius: var(--harmonie-radius) !important;
+  border: 1px solid rgba(var(--spice-rgb-text), 0.08);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35) !important;
+}
+
+.main-contextMenu-menuItemButton {
+  border-radius: 6px !important;
+}
+
+.main-contextMenu-menuItemButton:hover {
+  background-color: var(--spice-button) !important;
+  color: #fff !important;
+}
+
+/* ---------- Thin scrollbars ---------- */
+::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+::-webkit-scrollbar-thumb,
+.os-scrollbar-handle {
+  background-color: rgba(var(--spice-rgb-text), 0.2) !important;
+  border-radius: 999px !important;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+/* Links and accents */
+a:hover {
+  text-decoration-color: var(--spice-button) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .Root__top-container::before,
+  .main-card-card,
+  [data-testid="control-button-playpause"] {
+    transition: none !important;
+  }
+}
