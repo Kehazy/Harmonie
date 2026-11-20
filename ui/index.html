@@ -224,8 +224,8 @@
 
   /* ---------- Home ---------- */
   .home-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(250px, 1fr); gap: 12px; margin-top: 24px; }
-  .stage { padding: 14px; display: flex; align-items: center; }
-  .stage .pv { width: 100%; }
+  .stage { padding: 14px; display: flex; }
+  .stage > .pv { width: 100%; aspect-ratio: auto; min-height: 300px; }
   .apply { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
   .apply h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
   .summary { display: flex; flex-direction: column; }
@@ -235,6 +235,13 @@
   .summary b { font-weight: 500; display: inline-flex; align-items: center; gap: 8px; }
   .summary .chip-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); transition: background .4s; }
   .apply .spacer { flex: 1; }
+  .apply .actions { display: flex; flex-direction: column; gap: 8px; }
+  .ghost.wide { width: 100%; justify-content: center; height: 40px; }
+  .dismiss { flex: none; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: var(--faint); transition: background .2s, color .2s; }
+  .dismiss:hover { background: var(--hover); color: var(--text); }
+  .dismiss svg { width: 14px; height: 14px; }
+  .now { position: relative; }
+  .now .pv-wave { left: 10px; right: 10px; top: auto; bottom: 2px; height: 10px; opacity: .8; }
   .linkish { color: var(--accent); font-size: 13px; font-weight: 500; align-self: flex-start; }
   .linkish:hover { text-decoration: underline; text-underline-offset: 3px; }
 
@@ -420,6 +427,7 @@
     <symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
     <symbol id="sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
     <symbol id="shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="play-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></symbol>
     <symbol id="alert" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17v.01"/></symbol>
     <symbol id="gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 4.5 9 8 12 8zM12 8s2-5 4.5-3.5S15 8 12 8z"/></symbol>
     <symbol id="star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol>
@@ -474,6 +482,7 @@
     <div class="now" title="Current style">
       <div class="now-art"></div>
       <div><small>Current style</small><b id="nowStyle">Dark · Rose</b></div>
+      <div class="pv-wave" aria-hidden="true"></div>
     </div>
     <div class="sidebar-foot">
       <div class="sep"></div>
@@ -504,7 +513,7 @@
       <div class="banners">
         <div class="banner info" id="updateBanner" hidden><span class="ic"><svg class="i"><use href="#gift"/></svg></span><p><b id="updateText">A new version is available.</b> Download it from GitHub.</p><button class="ghost" data-link="https://github.com/Kehazy/harmonie/releases/latest">Download</button></div>
         <div class="banner warn" id="spicetifyBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Spicetify is not installed.</b> Harmonie needs it to change Spotify's look.</p><button class="ghost" data-link="https://spicetify.app">Get Spicetify</button></div>
-        <div class="banner warn" id="storeBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Microsoft Store version of Spotify.</b> Its own Start menu tile opens Spotify without the theme. Use a shortcut that starts it through Spicetify, or install Spotify from spotify.com.</p><button class="ghost" id="shortcut">Create shortcut</button></div>
+        <div class="banner warn" id="storeBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Microsoft Store version of Spotify.</b> Its own Start menu tile opens Spotify without the theme. Use a shortcut that starts it through Spicetify, or install Spotify from spotify.com.</p><button class="ghost" id="shortcut">Create shortcut</button><button class="dismiss" id="hideStore" title="Hide" aria-label="Hide this message"><svg class="i"><use href="#x"/></svg></button></div>
       </div>
 
       <div class="home-grid">
@@ -520,7 +529,10 @@
           </div>
           <button class="linkish" data-go="look">Change in Appearance</button>
           <div class="spacer"></div>
-          <button class="primary wide magnetic" id="install"><span>Install theme</span><svg class="i"><use href="#arrow"/></svg></button>
+          <div class="actions">
+            <button class="primary wide magnetic" id="install"><span>Install theme</span><svg class="i"><use href="#arrow"/></svg></button>
+            <button class="ghost wide" id="openSpotify"><svg class="i"><use href="#play-circle"/></svg>Open Spotify</button>
+          </div>
           <div class="busy-bar"><i></i></div>
           <p class="hint">Spotify restarts on its own.</p>
         </div>
@@ -620,6 +632,7 @@
         }
         if (cmd === "open_link") return void window.open(args.url, "_blank");
         if (cmd === "create_shortcut") return "Shortcut created on your desktop.";
+        if (cmd === "open_spotify") return;
         await new Promise((r) => setTimeout(r, 1600));
         return "";
       };
@@ -806,7 +819,8 @@
     $("#eyebrow").textContent = "Harmonie " + s.version;
     $("#appVersion").textContent = s.version;
     $("#spicetifyBanner").hidden = !!s.spicetify;
-    $("#storeBanner").hidden = !s.spicetify || !s.store_spotify;
+    $("#storeBanner").hidden = !s.spicetify || !s.store_spotify || pref("harmonie-hide-store") === "1";
+    $("#openSpotify").disabled = state.busy || !s.spicetify;
   }
 
   async function refresh(first = false) {
@@ -831,7 +845,9 @@
       await invoke(cmd, args);
       notify(done);
     } catch (e) {
-      notify(String(e).split("\n").filter(Boolean).slice(-2).join(" "), true);
+      const lines = String(e).split("\n").filter(Boolean);
+      if (lines.length > 1) console.warn("Harmonie:", lines.slice(1).join("\n"));
+      notify(lines[0] || "Something went wrong.", true);
     } finally {
       label.textContent = original;
       state.busy = false;
@@ -844,6 +860,16 @@
   $("#install").onclick = () => doInstall($("#install"));
   $("#apply").onclick = () => doInstall($("#apply"));
   $("#remove").onclick = () => run($("#remove"), "Removing…", "uninstall", {}, "Theme removed. Your previous theme is back.");
+
+  $("#hideStore").onclick = () => {
+    pref("harmonie-hide-store", "1");
+    $("#storeBanner").hidden = true;
+  };
+
+  $("#openSpotify").onclick = () =>
+    invoke("open_spotify")
+      .then(() => notify("Opening Spotify…"))
+      .catch((e) => notify(String(e), true));
 
   $("#shortcut").onclick = async () => {
     const b = $("#shortcut");

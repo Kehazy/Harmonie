@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::{Deserialize, Serialize};
+use tauri::Manager;
 use std::{
     env, fs,
     io::Write,
@@ -205,6 +206,42 @@ fn spicetify(args: &[&str]) -> Result<String, String> {
     }
 }
 
+/// Turns Spicetify's output into one sentence a person can act on, followed by
+/// the last meaningful line of the raw output.
+fn friendly(err: &str) -> String {
+    let lower = err.to_ascii_lowercase();
+    let hint = if lower.contains("cannot detect spotify")
+        || lower.contains("cannot find spotify")
+        || lower.contains("spotify_path")
+    {
+        Some("Spotify was not found. Install Spotify and open it once, then try again.")
+    } else if lower.contains("access is denied")
+        || lower.contains("permission denied")
+        || lower.contains("used by another process")
+    {
+        Some("Windows blocked Spotify's files. Quit Spotify completely and try again.")
+    } else if lower.contains("not a valid zip") || lower.contains("failed to extract") {
+        Some("Spicetify could not read Spotify's files. Open and close Spotify once, then try again.")
+    } else if lower.contains("outdated") || lower.contains("backup") {
+        Some("Spotify was updated and Spicetify could not catch up. Run \"spicetify restore backup apply\" in a terminal.")
+    } else {
+        None
+    };
+    let detail = err
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty() && !l.starts_with("spicetify v") && !l.ends_with("failed:"))
+        .last()
+        .unwrap_or("")
+        .to_string();
+    match hint {
+        Some(h) if detail.is_empty() => h.to_string(),
+        Some(h) => format!("{h}\n{detail}"),
+        None if detail.is_empty() => err.trim().to_string(),
+        None => detail,
+    }
+}
+
 /// After a Spotify update, `apply` exits with 0 but only prints that the
 /// preprocessed data is outdated, without applying anything.
 fn needs_new_backup(log: &str) -> bool {
@@ -336,8 +373,9 @@ async fn install(scheme: String, accent: String, options: Option<Options>) -> Re
         "1",
         "replace_colors",
         "1",
-    ])?;
-    apply()
+    ])
+    .map_err(|e| friendly(&e))?;
+    apply().map_err(|e| friendly(&e))
 }
 
 #[tauri::command]
@@ -360,8 +398,9 @@ async fn uninstall() -> Result<String, String> {
         &prev_theme,
         "color_scheme",
         &prev_scheme,
-    ])?;
-    let log = apply()?;
+    ])
+    .map_err(|e| friendly(&e))?;
+    let log = apply().map_err(|e| friendly(&e))?;
 
     let _ = fs::remove_dir_all(dir.join("Themes").join(THEME));
     let _ = fs::remove_file(dir.join(PREVIOUS_FILE));
@@ -408,6 +447,30 @@ async fn create_shortcut() -> Result<String, String> {
     }
 }
 
+/// Opens Spotify. The Microsoft Store version only loads the theme when started
+/// through `spicetify auto`.
+#[tauri::command]
+async fn open_spotify() -> Result<(), String> {
+    let store = config_dir()
+        .map(|d| read_setting(&d, "spotify_path").contains("WindowsApps"))
+        .unwrap_or(false);
+    let mut cmd = if store {
+        let mut c = command(spicetify_exe().ok_or("Spicetify is not installed.")?);
+        c.arg("auto");
+        c
+    } else {
+        let mut c = command("explorer");
+        c.arg("spotify:");
+        c
+    };
+    cmd.stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("Could not open Spotify: {e}"))
+}
+
 /// Opens one of the known project links in the default browser.
 #[tauri::command]
 fn open_link(url: String) -> Result<(), String> {
@@ -426,7 +489,93 @@ fn open_link(url: String) -> Result<(), String> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![status, install, uninstall, create_shortcut, open_link])
+        // A second launch focuses the open window instead of starting a second app
+        // that could apply or remove the theme at the same time.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.unminimize();
+                let _ = w.show();
+                let _ = w.set_focus();
+            }
+        }))
+        .invoke_handler(tauri::generate_handler![
+            status,
+            install,
+            uninstall,
+            create_shortcut,
+            open_spotify,
+            open_link
+        ])
         .run(tauri::generate_context!())
         .expect("failed to start Harmonie");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn options_round_trip() {
+        let defaults = Options::parse(USER_CSS);
+        assert_eq!((defaults.art, defaults.radius, defaults.floating), (42, 14, true));
+
+        let o = Options { art: 20, radius: 6, floating: false };
+        let css = o.apply_to(USER_CSS);
+        let back = Options::parse(&css);
+        assert_eq!((back.art, back.radius, back.floating), (20, 6, false));
+        assert!(css.contains("--harmonie-player-gap: 0px;"));
+        // Only the options block changes.
+        assert_eq!(css.matches(OPTIONS_START).count(), 1);
+        assert!(css.contains(".harmonie-wave"));
+    }
+
+    #[test]
+    fn options_are_clamped() {
+        let o = Options { art: 200, radius: 99, floating: true }.clamped();
+        assert_eq!((o.art, o.radius), (80, 24));
+    }
+
+    #[test]
+    fn schemes_split_into_mode_and_accent() {
+        assert_eq!(split_scheme("dark"), ("dark".into(), "rose".into()));
+        assert_eq!(split_scheme("light-blue"), ("light".into(), "blue".into()));
+        assert_eq!(split_scheme("weird-thing"), ("dark".into(), "rose".into()));
+        assert_eq!(split_scheme(""), ("dark".into(), "rose".into()));
+    }
+
+    #[test]
+    fn color_ini_has_every_scheme() {
+        for mode in ["dark", "light"] {
+            for accent in ACCENTS {
+                let section = if *accent == "rose" {
+                    format!("[{mode}]")
+                } else {
+                    format!("[{mode}-{accent}]")
+                };
+                assert!(COLOR_INI.contains(&section), "missing {section}");
+            }
+        }
+    }
+
+    #[test]
+    fn detects_outdated_backup() {
+        assert!(needs_new_backup(
+            "info Preprocessed Spotify data is outdated. Please run \"spicetify restore backup apply\""
+        ));
+        assert!(!needs_new_backup("success Applied additional modifications"));
+    }
+
+    #[test]
+    fn strips_ansi_colors() {
+        assert_eq!(strip_ansi("\u{1b}[32m success \u{1b}[0m done"), " success  done");
+    }
+
+    #[test]
+    fn friendly_errors() {
+        let e = "spicetify apply failed:\nspicetify v2.46.7\nerror Failed to extract backup\nfatal zip: not a valid zip file";
+        let msg = friendly(e);
+        assert!(msg.starts_with("Spicetify could not read Spotify's files."), "{msg}");
+        assert!(msg.ends_with("fatal zip: not a valid zip file"), "{msg}");
+        assert_eq!(friendly("something odd"), "something odd");
+    }
 }

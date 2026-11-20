@@ -72,7 +72,8 @@ h1.encore-text,
   transition: background-image 0.9s var(--harmonie-ease), opacity 0.6s var(--harmonie-ease);
 }
 
-/* Translucent panels */
+/* Translucent panels. Spotify rounds and clips the panels itself (8px), so the
+   radius goes on the panels too, or corners under 8px would be impossible. */
 .Root__nav-bar,
 .Root__main-view,
 .Root__right-sidebar,
@@ -80,12 +81,29 @@ h1.encore-text,
   background: transparent !important;
 }
 
-.Root__nav-bar > *,
-.Root__main-view > div,
-.Root__right-sidebar > * {
+.Root__nav-bar,
+.Root__main-view,
+.Root__right-sidebar {
+  border-radius: var(--harmonie-radius) !important;
+}
+
+/* Glass on the panel content, never on the resize handles along the edges. */
+.Root__nav-bar > :not([class*="LayoutResizer"]),
+.Root__main-view > div:not([class*="LayoutResizer"]),
+.Root__right-sidebar > :not([class*="LayoutResizer"]) {
   background-color: var(--harmonie-glass) !important;
   border-radius: var(--harmonie-radius) !important;
   box-shadow: var(--harmonie-edge);
+}
+
+[class*="LayoutResizer"] {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.LayoutResizer__resize-bar::after,
+.LayoutResizer__resize-bar > * {
+  background-color: rgba(var(--spice-rgb-button), 0.6) !important;
 }
 
 .main-view-container,
