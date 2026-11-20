@@ -16,11 +16,7 @@ body,
 button,
 input,
 textarea,
-.encore-text,
-.main-type-mesto,
-.main-type-ballad,
-.main-type-canon,
-.main-type-alto {
+.encore-text {
   font-family: var(--harmonie-font) !important;
   -webkit-font-smoothing: antialiased;
 }
@@ -141,8 +137,6 @@ h1.encore-text {
 }
 
 /* Active buttons (shuffle, repeat, like) in accent color */
-.main-shuffleButton-button[aria-checked="true"],
-.main-repeatButton-button[aria-checked="true"],
 [data-testid="control-button-shuffle"][aria-checked="true"],
 [data-testid="control-button-repeat"][aria-checked="true"],
 .main-addButton-active {
@@ -159,9 +153,7 @@ h1.encore-text {
 }
 
 .main-cardImage-circular,
-.main-cardImage-circular img,
-.main-entityHeader-shape-circle,
-.main-entityHeader-image.main-entityHeader-circle {
+.main-cardImage-circular img {
   border-radius: 50% !important;
 }
 
@@ -195,15 +187,8 @@ h1.encore-text {
   background-color: var(--harmonie-hover) !important;
 }
 
-.main-trackList-trackListRow[aria-selected="true"],
-.main-trackList-selected {
+.main-trackList-trackListRow[aria-selected="true"] {
   background-color: rgba(var(--spice-rgb-button), 0.16) !important;
-}
-
-.main-trackList-playingIcon,
-.main-trackList-rowTitle[data-encore-id][style*="color"],
-.main-trackList-active .main-trackList-rowTitle {
-  color: var(--spice-button) !important;
 }
 
 .main-trackList-trackListHeader {
@@ -213,22 +198,19 @@ h1.encore-text {
 
 /* ---------- Library (sidebar) ---------- */
 .main-yourLibraryX-listItem,
-.main-yourLibraryX-listItemGroup [role="row"] > div,
-.main-rootlist-rootlistItem {
+.main-yourLibraryX-libraryItemContainer [role="row"] > div {
   border-radius: var(--harmonie-radius-sm) !important;
 }
 
-.main-yourLibraryX-listItem:hover,
-.main-rootlist-rootlistItem:hover {
+.main-yourLibraryX-listItem:hover {
   background-color: var(--harmonie-hover) !important;
 }
 
 /* Filter chips */
 .main-yourLibraryX-filterArea button > span,
 .search-searchCategory-categoryGrid button > span,
-[role="checkbox"] > span.encore-text,
-.ChipInner,
-.ChipInnerComponent {
+.main-home-filterChipsSection button > span,
+[role="checkbox"] > span.encore-text {
   border-radius: 999px !important;
 }
 
@@ -243,8 +225,7 @@ h1.encore-text {
 /* ---------- Menus and dialogs ---------- */
 .main-contextMenu-menu,
 .main-contextMenu-tippy,
-.GenericModal,
-.main-trackCreditsModal-container {
+.GenericModal {
   background-color: var(--harmonie-glass-strong) !important;
   backdrop-filter: blur(40px) saturate(1.8);
   border-radius: var(--harmonie-radius) !important;

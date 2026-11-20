@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Harmonie</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root {
     --accent: #e5445c;
@@ -24,8 +21,8 @@
     --shadow: 0 24px 48px -20px rgba(0, 0, 0, 0.6);
     --danger: #e5484d;
     --ok: #3fa877;
-    --font: "Geist", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
-    --mono: "Geist Mono", ui-monospace, "Cascadia Mono", monospace;
+    --font: "Segoe UI Variable Display", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, monospace;
     --spring: cubic-bezier(0.16, 1, 0.3, 1);
   }
   :root[data-theme="light"] {
@@ -297,6 +294,30 @@
   .island.err .ic { background: var(--danger); }
   .island .ic svg { width: 13px; height: 13px; stroke-width: 2.6; }
 
+  /* ---------- Banners ---------- */
+  .banners { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+  .banners:not(:has(.banner:not([hidden]))) { display: none; }
+  .banner {
+    display: flex; align-items: center; gap: 14px; padding: 12px 14px 12px 16px; border-radius: 16px;
+    background: var(--raised); border: 1px solid var(--line); box-shadow: var(--edge); font-size: 13.5px; line-height: 1.5;
+  }
+  .banner[hidden] { display: none; }
+  .banner .ic { width: 30px; height: 30px; flex: none; border-radius: 9px; display: grid; place-items: center; }
+  .banner .ic svg { width: 16px; height: 16px; }
+  .banner.warn .ic { color: #e0a23a; background: rgba(224, 162, 58, 0.14); }
+  .banner.info .ic { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .banner p { flex: 1; color: var(--sub); }
+  .banner p b { color: var(--text); font-weight: 500; }
+  .ghost {
+    flex: none; height: 32px; padding: 0 14px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    border: 1px solid var(--line); background: var(--hover); transition: background .2s, transform .15s var(--spring);
+  }
+  .ghost:hover { background: var(--active); }
+  .ghost:active { transform: scale(.97); }
+  .links { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .links .ghost { display: inline-flex; align-items: center; gap: 8px; height: 36px; }
+  .links .ghost svg { width: 16px; height: 16px; }
+
   @media (max-width: 860px) {
     .bento, .look, .about { grid-template-columns: 1fr; }
     .feat-strip { grid-template-columns: 1fr 1fr; }
@@ -327,6 +348,10 @@
     <symbol id="image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></symbol>
     <symbol id="drop" viewBox="0 0 24 24"><path d="M12 3s7 7.5 7 12a7 7 0 0 1-14 0c0-4.5 7-12 7-12z"/></symbol>
     <symbol id="player" viewBox="0 0 24 24"><rect x="3" y="14" width="18" height="7" rx="3"/><path d="M10 16.5v2l2-1z"/><path d="M6 10h12M8 6h8"/></symbol>
+    <symbol id="alert" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17v.01"/></symbol>
+    <symbol id="gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 4.5 9 8 12 8zM12 8s2-5 4.5-3.5S15 8 12 8z"/></symbol>
+    <symbol id="star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol>
+    <symbol id="bug" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="13" rx="5"/><path d="M12 11v9M3 13h4M17 13h4M5 7l3 2M19 7l-3 2M5 20l3-2M19 20l-3-2M9 5l1.5 2M15 5l-1.5 2"/></symbol>
     <symbol id="type" viewBox="0 0 24 24"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></symbol>
   </defs>
 </svg>
@@ -367,9 +392,15 @@
   <main class="content glass" id="content">
     <!-- Home -->
     <section class="page on" id="page-home">
-      <p class="eyebrow rise">Harmonie 1.0</p>
+      <p class="eyebrow rise" id="eyebrow">Harmonie</p>
       <h1 class="rise" style="--i:1" id="greet">Good evening</h1>
       <p class="lead rise" style="--i:2">A calmer Spotify: blurred album art backgrounds, frosted glass and a floating player.</p>
+
+      <div class="banners">
+        <div class="banner info" id="updateBanner" hidden><span class="ic"><svg class="i"><use href="#gift"/></svg></span><p><b id="updateText">A new version is available.</b> Download it from GitHub.</p><button class="ghost" data-link="https://github.com/DevStudioss/harmonie/releases/latest">Download</button></div>
+        <div class="banner warn" id="spicetifyBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Spicetify is not installed.</b> Harmonie needs it to change Spotify's look.</p><button class="ghost" data-link="https://spicetify.app">Get Spicetify</button></div>
+        <div class="banner warn" id="storeBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Microsoft Store version of Spotify.</b> Its own Start menu tile opens Spotify without the theme. Use a shortcut that starts it through Spicetify, or install Spotify from spotify.com.</p><button class="ghost" id="shortcut">Create shortcut</button></div>
+      </div>
 
       <div class="bento">
         <div class="tile hero rise" style="--i:3" id="heroTile">
@@ -449,12 +480,16 @@
       <div class="about">
         <div class="rise" style="--i:3">
           <div class="spec">
-            <div><span>Version</span><b>1.0.0</b></div>
+            <div><span>Version</span><b id="appVersion">-</b></div>
             <div><span>Engine</span><b>Rust · Tauri 2</b></div>
             <div><span>Size</span><b>3.0 MB</b></div>
             <div><span>Installed via</span><b>Spicetify</b></div>
           </div>
           <p class="note">Harmonie only changes how Spotify looks. It does not touch ads or Premium features.</p>
+          <div class="links">
+            <button class="ghost" data-link="https://github.com/DevStudioss/harmonie"><svg class="i"><use href="#star"/></svg>Star on GitHub</button>
+            <button class="ghost" data-link="https://github.com/DevStudioss/harmonie/issues/new/choose"><svg class="i"><use href="#bug"/></svg>Report a bug</button>
+          </div>
         </div>
         <div class="feats">
           <div class="feat rise" style="--i:3"><span class="ic"><svg class="i"><use href="#image"/></svg></span><div><b>Blurred art</b><p>The colors of the current cover fill the background and change with every track.</p></div></div>
@@ -474,11 +509,13 @@
   // Outside the app (browser preview): demo data.
   const invoke = window.__TAURI__
     ? window.__TAURI__.core.invoke
-    : async (cmd) => {
+    : async (cmd, args) => {
         if (cmd === "status") {
           await new Promise((r) => setTimeout(r, 900));
-          return { spicetify: "2.46.4", installed: false, active: false, scheme: "", accent: "rose", current_theme: "marketplace" };
+          return { version: "2.0.0", spicetify: "2.46.4", installed: false, active: false, scheme: "dark", accent: "rose", current_theme: "marketplace", store_spotify: true };
         }
+        if (cmd === "open_link") return void window.open(args.url, "_blank");
+        if (cmd === "create_shortcut") return "Shortcut created on your desktop.";
         await new Promise((r) => setTimeout(r, 1600));
         return "";
       };
@@ -608,16 +645,58 @@
     $("#apply").disabled = off;
     $("#remove").disabled = state.busy || !s.active;
     $("#heroTile").classList.toggle("busy", state.busy);
+    $("#eyebrow").textContent = "Harmonie " + s.version;
+    $("#appVersion").textContent = s.version;
+    $("#spicetifyBanner").hidden = !!s.spicetify;
+    $("#storeBanner").hidden = !s.spicetify || !s.store_spotify;
   }
 
   async function refresh(first = false) {
     state.status = await invoke("status");
     if (first && state.status.active) {
-      if (state.status.scheme === "dark" || state.status.scheme === "light") setScheme(state.status.scheme);
+      setScheme(state.status.scheme);
       if (ACCENTS[state.status.accent]) setAccent(state.status.accent);
     }
     render();
-    if (first && !state.status.spicetify) notify("Install Spicetify first from spicetify.app.", true);
+    if (first) checkForUpdate(state.status.version);
+  }
+
+  $("#shortcut").onclick = async () => {
+    const b = $("#shortcut");
+    b.disabled = true;
+    try {
+      notify(await invoke("create_shortcut"));
+    } catch (e) {
+      notify(String(e), true);
+    } finally {
+      b.disabled = false;
+    }
+  };
+
+  /* ----- Links and updates ----- */
+  $$("[data-link]").forEach((b) => (b.onclick = () => invoke("open_link", { url: b.dataset.link }).catch((e) => notify(String(e), true))));
+
+  function newer(latest, current) {
+    const a = latest.replace(/^v/, "").split(".").map(Number);
+    const b = current.split(".").map(Number);
+    for (let i = 0; i < 3; i++) {
+      if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) > (b[i] || 0);
+    }
+    return false;
+  }
+
+  async function checkForUpdate(current) {
+    try {
+      const res = await fetch("https://api.github.com/repos/DevStudioss/harmonie/releases/latest", { headers: { Accept: "application/vnd.github+json" } });
+      if (!res.ok) return;
+      const { tag_name } = await res.json();
+      if (tag_name && newer(tag_name, current)) {
+        $("#updateText").textContent = `Harmonie ${tag_name.replace(/^v/, "")} is available.`;
+        $("#updateBanner").hidden = false;
+      }
+    } catch (_) {
+      // Offline: skip the update check.
+    }
   }
 
   async function run(button, busyLabel, cmd, args, done) {

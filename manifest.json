@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Harmonie",
+    "description": "Clean, Apple Music-inspired theme: blurred album art background, frosted glass panels, floating player and five accent colors in dark and light.",
+    "preview": "assets/app-home.png",
+    "readme": "README.md",
+    "usercss": "theme/user.css",
+    "schemes": "theme/color.ini",
+    "include": ["https://raw.githubusercontent.com/DevStudioss/harmonie/main/theme/theme.js"],
+    "authors": [{ "name": "DevStudioss", "url": "https://github.com/DevStudioss" }],
+    "tags": ["dark", "light", "glass", "blur", "minimal"]
+  }
+]
