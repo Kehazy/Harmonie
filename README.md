@@ -32,6 +32,7 @@
 - **Presets** — Harmonie, Midnight, Sunset, Studio and Daylight in one click
 - **Small touches** — accent edge on hovered tracks, accent keyboard focus, pages that fade in, rounded tooltips
 - **Survives Spotify updates** — the app repairs Spicetify's backup when Spotify updates
+- **Handles Spicetify for you** — installs it if missing, updates it if outdated, repairs it if applying fails, and opens a terminal with the fix as a last resort
 - **One-click install and undo** — the app restores the theme you had before
 - **Tiny and fast** — the installer is a 3 MB native Rust app, no Electron
 
@@ -41,8 +42,8 @@ Harmonie only changes how Spotify looks. It does not touch ads or Premium featur
 
 ### Option 1: the Harmonie app (Windows)
 
-1. Install [Spicetify](https://spicetify.app) if you don't have it yet.
-2. Download **[Harmonie.exe](https://github.com/Kehazy/harmonie/releases/latest)** and run it. No setup needed.
+1. Download **[Harmonie.exe](https://github.com/Kehazy/harmonie/releases/latest)** and run it. No setup needed.
+2. You don't need to install Spicetify yourself: Harmonie installs it, or updates it, when you install the theme.
 3. Pick a preset, or a mode, color and pattern in **Appearance**, then click **Apply to Spotify** (or press **Ctrl + Enter**).
 
 > Windows SmartScreen may warn about an unknown publisher because the app is not code-signed yet. Click **More info**, then **Run anyway**.

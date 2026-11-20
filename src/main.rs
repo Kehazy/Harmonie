@@ -17,6 +17,7 @@ const THEME: &str = "Harmonie";
 const COLOR_INI: &str = include_str!("../theme/color.ini");
 const USER_CSS: &str = include_str!("../theme/user.css");
 const THEME_JS: &str = include_str!("../theme/theme.js");
+const INSTALL_SPICETIFY_PS1: &str = include_str!("install_spicetify.ps1");
 const PREVIOUS_FILE: &str = ".harmonie-previous";
 
 /// Accent ids. "rose" is the plain `dark` / `light` scheme; the others are `dark-<id>` / `light-<id>`.
@@ -268,6 +269,12 @@ fn friendly(err: &str) -> String {
         || lower.contains("used by another process")
     {
         Some("Windows blocked Spotify's files. Quit Spotify completely and try again.")
+    } else if lower.contains("unable to connect")
+        || lower.contains("could not be resolved")
+        || lower.contains("remote name")
+        || lower.contains("no such host")
+    {
+        Some("No internet connection. Connect and try again.")
     } else if lower.contains("not a valid zip") || lower.contains("failed to extract") {
         Some("Spicetify could not read Spotify's files. Open and close Spotify once, then try again.")
     } else if lower.contains("outdated") || lower.contains("backup") {
@@ -495,6 +502,90 @@ async fn create_shortcut() -> Result<String, String> {
     }
 }
 
+/// PowerShell's -EncodedCommand takes the script as base64 of UTF-16LE, which
+/// avoids every quoting problem with multi-line scripts.
+fn encode_powershell(script: &str) -> String {
+    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let bytes: Vec<u8> = script.encode_utf16().flat_map(|u| u.to_le_bytes()).collect();
+    let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
+    for chunk in bytes.chunks(3) {
+        let n = match chunk.len() {
+            3 => (chunk[0] as u32) << 16 | (chunk[1] as u32) << 8 | chunk[2] as u32,
+            2 => (chunk[0] as u32) << 16 | (chunk[1] as u32) << 8,
+            _ => (chunk[0] as u32) << 16,
+        };
+        for i in 0..4 {
+            if i <= chunk.len() {
+                out.push(ALPHABET[(n >> (18 - 6 * i) & 63) as usize] as char);
+            } else {
+                out.push('=');
+            }
+        }
+    }
+    out
+}
+
+/// Downloads and installs (or updates) Spicetify from its GitHub releases, then
+/// creates its config. Returns the installed version.
+#[tauri::command]
+async fn install_spicetify() -> Result<String, String> {
+    let out = command("powershell")
+        .args([
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-EncodedCommand",
+            &encode_powershell(INSTALL_SPICETIFY_PS1),
+        ])
+        .output()
+        .map_err(|e| format!("Could not start PowerShell: {e}"))?;
+    let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if !out.status.success() {
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        return Err(friendly(&format!("Spicetify could not be installed.\n{}", stderr.trim())));
+    }
+    let version = stdout.lines().last().unwrap_or("").trim().to_string();
+    // First run creates config-xpui.ini and finds Spotify.
+    if config_dir().is_err() {
+        spicetify(&["config"]).map_err(|e| friendly(&e))?;
+    }
+    Ok(version)
+}
+
+/// Fixes the usual Spicetify problems: puts Spotify back to its original files,
+/// then backs it up again and applies the current theme.
+#[tauri::command]
+async fn repair() -> Result<String, String> {
+    let _ = spicetify(&["restore"]);
+    match spicetify(&["backup", "apply"]) {
+        Ok(log) if !needs_new_backup(&log) => Ok(log),
+        _ => {
+            let _ = spicetify(&["clear"]);
+            spicetify(&["backup", "apply"]).map_err(|e| friendly(&e))
+        }
+    }
+}
+
+/// Last resort: opens a visible PowerShell window that runs the repair, so the
+/// person sees every step and any error.
+#[tauri::command]
+fn open_fix_terminal() -> Result<(), String> {
+    let exe = spicetify_exe().ok_or("Spicetify is not installed.")?;
+    let script = concat!(
+        "Write-Host 'Harmonie is repairing Spicetify...' -ForegroundColor Magenta; ",
+        "& $env:HARMONIE_SPICETIFY restore; ",
+        "'y' | & $env:HARMONIE_SPICETIFY backup apply; ",
+        "Write-Host ''; Write-Host 'Done. You can close this window.' -ForegroundColor Green"
+    );
+    let mut cmd = Command::new("powershell");
+    cmd.args(["-NoProfile", "-NoExit", "-Command", script])
+        .env("HARMONIE_SPICETIFY", &exe);
+    #[cfg(windows)]
+    cmd.creation_flags(0x0000_0010); // CREATE_NEW_CONSOLE: a window the person can read
+    cmd.spawn().map(|_| ()).map_err(|e| format!("Could not open a terminal: {e}"))
+}
+
 /// Opens Spotify. The Microsoft Store version only loads the theme when started
 /// through `spicetify auto`.
 #[tauri::command]
@@ -553,6 +644,9 @@ fn main() {
             install,
             uninstall,
             create_shortcut,
+            install_spicetify,
+            repair,
+            open_fix_terminal,
             open_spotify,
             open_link
         ])
@@ -638,6 +732,27 @@ mod tests {
     #[test]
     fn strips_ansi_colors() {
         assert_eq!(strip_ansi("\u{1b}[32m success \u{1b}[0m done"), " success  done");
+    }
+
+    #[test]
+    fn install_script_targets_the_official_release() {
+        assert!(INSTALL_SPICETIFY_PS1.contains("api.github.com/repos/spicetify/cli/releases/latest"));
+        assert!(INSTALL_SPICETIFY_PS1.contains("spicetify-$version-windows-$arch.zip"));
+        assert!(!INSTALL_SPICETIFY_PS1.contains("iex"), "no remote script execution");
+    }
+
+    #[test]
+    fn encodes_powershell_like_dotnet() {
+        // [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes('Write-Output 1'))
+        assert_eq!(encode_powershell("Write-Output 1"), "VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAxAA==");
+        assert_eq!(encode_powershell("ab"), "YQBiAA==");
+        assert_eq!(encode_powershell(""), "");
+    }
+
+    #[test]
+    fn friendly_network_error() {
+        let msg = friendly("Spicetify could not be installed.\nUnable to connect to the remote server");
+        assert!(msg.starts_with("No internet connection."), "{msg}");
     }
 
     #[test]

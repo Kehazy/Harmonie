@@ -578,7 +578,8 @@
 
       <div class="banners">
         <div class="banner info" id="updateBanner" hidden><span class="ic"><svg class="i"><use href="#gift"/></svg></span><p><b id="updateText">A new version is available.</b> Download it from GitHub.</p><button class="ghost" data-link="https://github.com/Kehazy/harmonie/releases/latest">Download</button></div>
-        <div class="banner warn" id="spicetifyBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Spicetify is not installed.</b> Harmonie needs it to change Spotify's look.</p><button class="ghost" data-link="https://spicetify.app">Get Spicetify</button></div>
+        <div class="banner warn" id="spicetifyBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Spicetify is not installed.</b> Harmonie installs it for you when you install the theme, or right now.</p><button class="ghost" id="installSpicetify">Install Spicetify</button></div>
+        <div class="banner info" id="spicetifyUpdateBanner" hidden><span class="ic"><svg class="i"><use href="#gift"/></svg></span><p><b id="spicetifyUpdateText">A Spicetify update is available.</b> Harmonie updates it when you install the theme, or right now.</p><button class="ghost" id="updateSpicetify">Update Spicetify</button></div>
         <div class="banner warn" id="storeBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Microsoft Store version of Spotify.</b> Its own Start menu tile opens Spotify without the theme. Use a shortcut that starts it through Spicetify, or install Spotify from spotify.com.</p><button class="ghost" id="shortcut">Create shortcut</button><button class="dismiss" id="hideStore" title="Hide" aria-label="Hide this message"><svg class="i"><use href="#x"/></svg></button></div>
       </div>
 
@@ -712,6 +713,8 @@
         if (cmd === "open_link") return void window.open(args.url, "_blank");
         if (cmd === "create_shortcut") return "Shortcut created on your desktop.";
         if (cmd === "open_spotify") return;
+        if (cmd === "install_spicetify") { await new Promise((r) => setTimeout(r, 1500)); return "2.46.7"; }
+        if (cmd === "repair" || cmd === "open_fix_terminal") return "";
         await new Promise((r) => setTimeout(r, 1600));
         return "";
       };
@@ -799,7 +802,7 @@
     if (e.key === "Escape") return hideIsland();
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      if (!state.busy && state.status && state.status.spicetify) doInstall($("#page-look").classList.contains("on") ? $("#apply") : $("#install"));
+      if (!state.busy && state.status) doInstall($("#page-look").classList.contains("on") ? $("#apply") : $("#install"));
       return;
     }
     if (e.target.matches("input")) return;
@@ -978,19 +981,24 @@
   function render() {
     const s = state.status;
     if (!s) return;
-    $("#sp").textContent = s.spicetify ? "v" + s.spicetify : "missing";
-    $("#spDot").className = "dot " + (s.spicetify ? "ok" : "warn");
+    const outdated = !!(s.spicetify && spicetifyLatest && newer(spicetifyLatest, s.spicetify));
+    $("#sp").textContent = s.spicetify ? "v" + s.spicetify + (outdated ? " · update" : "") : "missing";
+    $("#spDot").className = "dot " + (s.spicetify && !outdated ? "ok" : "warn");
     $("#th").textContent = s.active ? "active" : s.installed ? "inactive" : "not installed";
     $("#thDot").className = "dot " + (s.active ? "ok" : "");
     $("#install span").textContent = s.active ? "Update theme" : "Install theme";
-    const off = state.busy || !s.spicetify;
-    $("#install").disabled = off;
-    $("#apply").disabled = off;
+    // Installing the theme also installs or updates Spicetify, so only "busy" blocks it.
+    $("#install").disabled = state.busy;
+    $("#apply").disabled = state.busy;
+    $("#installSpicetify").disabled = state.busy;
+    $("#updateSpicetify").disabled = state.busy;
     $("#remove").disabled = state.busy || !s.active;
     $("#applyTile").classList.toggle("busy", state.busy);
     $("#eyebrow").textContent = "Harmonie " + s.version;
     $("#appVersion").textContent = s.version;
     $("#spicetifyBanner").hidden = !!s.spicetify;
+    $("#spicetifyUpdateBanner").hidden = !outdated;
+    if (outdated) $("#spicetifyUpdateText").textContent = `Spicetify ${spicetifyLatest} is available (you have ${s.spicetify}).`;
     $("#storeBanner").hidden = !s.spicetify || !s.store_spotify || pref("harmonie-hide-store") === "1";
     $("#openSpotify").disabled = state.busy || !s.spicetify;
   }
@@ -1012,7 +1020,96 @@
     syncPending();
     render();
     if (first && pages.includes(state.status.start_page)) go(state.status.start_page);
-    if (first) checkForUpdate(state.status.version);
+    if (first) {
+      checkForUpdate(state.status.version);
+      latestSpicetify().then(render);
+    }
+  }
+
+  // Latest Spicetify version from GitHub, or null when offline.
+  let spicetifyLatest = null;
+  async function latestSpicetify() {
+    if (spicetifyLatest) return spicetifyLatest;
+    try {
+      const res = await fetch("https://api.github.com/repos/spicetify/cli/releases/latest", { headers: { Accept: "application/vnd.github+json" } });
+      if (res.ok) spicetifyLatest = (await res.json()).tag_name.replace(/^v/, "");
+    } catch (_) {}
+    return spicetifyLatest;
+  }
+
+  function errorLines(e) {
+    const lines = String(e).split("\n").filter(Boolean);
+    if (lines.length > 1) console.warn("Harmonie:", lines.slice(1).join("\n"));
+    return lines[0] || "Something went wrong.";
+  }
+
+  const fixInTerminal = { label: "Fix in terminal", run: () => invoke("open_fix_terminal").catch((e) => notify(errorLines(e), true)) };
+
+  // Makes sure Spicetify is installed and up to date. Returns true if it did something.
+  async function ensureSpicetify(setLabel) {
+    setLabel("Checking Spicetify…");
+    const latest = await latestSpicetify();
+    const current = state.status && state.status.spicetify;
+    if (!current) {
+      setLabel("Installing Spicetify…");
+      await invoke("install_spicetify");
+    } else if (latest && newer(latest, current)) {
+      setLabel("Updating Spicetify…");
+      await invoke("install_spicetify");
+    } else {
+      return false;
+    }
+    state.status = await invoke("status");
+    return true;
+  }
+
+  // One click does everything: install or update Spicetify, apply Harmonie,
+  // repair Spicetify and retry if that fails, and offer a terminal as a last resort.
+  async function setupAndInstall(button) {
+    if (state.busy) return;
+    const label = button.querySelector("span");
+    const original = label.textContent;
+    const setLabel = (text) => (label.textContent = text);
+    const args = { scheme: state.scheme, accent: state.accent, options: state.options };
+    state.busy = true;
+    render();
+    try {
+      await ensureSpicetify(setLabel);
+      setLabel("Applying Harmonie…");
+      try {
+        await invoke("install", args);
+      } catch (first) {
+        console.warn("Harmonie: first try failed, repairing.", String(first));
+        setLabel("Repairing Spicetify…");
+        await invoke("repair").catch(() => {});
+        setLabel("Applying Harmonie…");
+        await invoke("install", args);
+      }
+      notify("Theme applied.", false, { label: "Open Spotify", run: openSpotify });
+    } catch (e) {
+      notify(errorLines(e), true, state.status && state.status.spicetify ? fixInTerminal : null);
+    } finally {
+      label.textContent = original;
+      state.busy = false;
+      await refresh();
+    }
+  }
+
+  async function spicetifyOnly(button) {
+    if (state.busy) return;
+    const original = button.textContent;
+    state.busy = true;
+    render();
+    try {
+      const did = await ensureSpicetify((text) => (button.textContent = text));
+      notify(did ? `Spicetify ${state.status.spicetify} is ready.` : "Spicetify is already up to date.");
+    } catch (e) {
+      notify(errorLines(e), true);
+    } finally {
+      button.textContent = original;
+      state.busy = false;
+      await refresh();
+    }
   }
 
   async function run(button, busyLabel, cmd, args, done, action = null) {
@@ -1025,9 +1122,7 @@
       await invoke(cmd, args);
       notify(done, false, action);
     } catch (e) {
-      const lines = String(e).split("\n").filter(Boolean);
-      if (lines.length > 1) console.warn("Harmonie:", lines.slice(1).join("\n"));
-      notify(lines[0] || "Something went wrong.", true);
+      notify(errorLines(e), true, cmd === "uninstall" ? fixInTerminal : null);
     } finally {
       label.textContent = original;
       state.busy = false;
@@ -1039,9 +1134,9 @@
     invoke("open_spotify")
       .then(() => notify("Opening Spotify…"))
       .catch((e) => notify(String(e), true));
-  const doInstall = (btn) =>
-    run(btn, "Applying…", "install", { scheme: state.scheme, accent: state.accent, options: state.options },
-      "Theme applied.", { label: "Open Spotify", run: openSpotify });
+  const doInstall = setupAndInstall;
+  $("#installSpicetify").onclick = () => spicetifyOnly($("#installSpicetify"));
+  $("#updateSpicetify").onclick = () => spicetifyOnly($("#updateSpicetify"));
   $("#install").onclick = () => doInstall($("#install"));
   $("#apply").onclick = () => doInstall($("#apply"));
   $("#remove").onclick = () => run($("#remove"), "Removing…", "uninstall", {}, "Theme removed. Your previous theme is back.");
