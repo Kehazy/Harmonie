@@ -22,7 +22,8 @@
 ## Features
 
 - **Blurred album art** — the colors of the current cover fill the window and change with every track
-- **Apple Music-style lyrics** — lyrics float over the blurred cover, current line in bold
+- **Apple Music-style lyrics** — big bold lines over the blurred cover, the current line in white
+- **Harmonie wave** — three glowing sine waves ripple along the player while music plays, and settle on pause
 - **Frosted glass** — translucent panels, pill search bar, soft shadows on covers
 - **Floating player** — the bottom player becomes a rounded glass card (or stays docked, your choice)
 - **5 accent colors** — rose, violet, blue, green, orange, in dark and light (10 schemes)

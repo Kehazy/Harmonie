@@ -288,7 +288,19 @@
   .pv-row i { height: 4px; border-radius: 2px; background: var(--pv-sub); }
   .pv-row.on { background: color-mix(in srgb, var(--accent) 16%, transparent); }
   .pv-row.on i:nth-child(2) { background: var(--accent); }
-  .pv-bar-wrap { grid-column: 1 / -1; padding: 0 calc(var(--pv-gap) * 0.35px) calc(var(--pv-gap) * 0.35px); transition: padding .4s var(--spring); }
+  .pv-bar-wrap { position: relative; grid-column: 1 / -1; padding: 0 calc(var(--pv-gap) * 0.35px) calc(var(--pv-gap) * 0.35px); transition: padding .4s var(--spring); }
+  .pv-wave {
+    position: absolute; left: 8%; right: 8%; top: -6px; height: 12px; z-index: 1; pointer-events: none; overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  }
+  .pv-wave svg { position: absolute; inset: 0 auto 0 0; width: 200%; height: 100%; overflow: visible; animation: harmonie-flow 7s linear infinite; }
+  .pv-wave svg:nth-child(2) { animation-duration: 11s; animation-direction: reverse; }
+  .pv-wave svg:nth-child(3) { animation-duration: 16s; }
+  .pv-wave path { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+  .pv-wave svg:nth-child(1) path { stroke: var(--accent); stroke-width: 1.8; filter: drop-shadow(0 0 3px var(--accent)); }
+  .pv-wave svg:nth-child(2) path { stroke: color-mix(in srgb, var(--accent) 60%, transparent); stroke-width: 1.3; }
+  .pv-wave svg:nth-child(3) path { stroke: rgba(255,255,255,.3); stroke-width: 1; }
+  @keyframes harmonie-flow { to { transform: translateX(-50%); } }
   .pv-bar {
     height: 30px; display: flex; align-items: center; gap: 9px; padding: 0 9px;
     border-radius: calc(var(--pv-player-radius, 20) * 0.45px); background: var(--pv-panel);
@@ -382,6 +394,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
+    /* Keep the Harmonie wave drifting slowly, as in the Spotify theme. */
+    .pv-wave svg { animation: harmonie-flow 40s linear infinite !important; }
   }
 </style>
 </head>
@@ -436,7 +450,7 @@
         <div class="pv-row"><i></i><i></i><i></i></div>
       </div>
     </div>
-    <div class="pv-bar-wrap"><div class="pv-bar"><div class="pv-mini"></div><div class="pv-play"></div><div class="pv-prog"><i></i></div></div></div>
+    <div class="pv-bar-wrap"><div class="pv-wave" aria-hidden="true"></div><div class="pv-bar"><div class="pv-mini"></div><div class="pv-play"></div><div class="pv-prog"><i></i></div></div></div>
   </div>
 </template>
 
@@ -632,6 +646,20 @@
 
   /* ----- Previews ----- */
   $$("[data-preview]").forEach((slot) => slot.appendChild($("#pv-tpl").content.cloneNode(true)));
+
+  // The Harmonie wave, same shapes as in the Spotify theme (even periods loop seamlessly).
+  function sinePath(periods, amplitude, phase) {
+    let d = "";
+    for (let x = 0; x <= 1200; x += 8) {
+      const y = 11 + amplitude * Math.sin((x / 1200) * periods * 2 * Math.PI + phase);
+      d += (x ? "L" : "M") + x + "," + y.toFixed(2);
+    }
+    return d;
+  }
+  const waveSvgs = [[6, 6.5, 0], [4, 8, 1.3], [8, 4.5, 2.6]]
+    .map(([p, a, ph]) => `<svg viewBox="0 0 1200 22" preserveAspectRatio="none"><path d="${sinePath(p, a, ph)}"/></svg>`)
+    .join("");
+  $$(".pv-wave").forEach((w) => (w.innerHTML = waveSvgs));
 
   function paintPreviews() {
     const o = state.options;
