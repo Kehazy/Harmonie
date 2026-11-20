@@ -8,10 +8,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/DevStudioss/harmonie/releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/DevStudioss/harmonie?label=download&color=e5445c"></a>
-  <a href="https://github.com/DevStudioss/harmonie/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/DevStudioss/harmonie/total?color=3b82d6"></a>
-  <a href="https://github.com/DevStudioss/harmonie/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/DevStudioss/harmonie?style=flat&color=e08a2e"></a>
-  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/DevStudioss/harmonie?color=2fa36b"></a>
+  <a href="https://github.com/Kehazy/harmonie/releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/Kehazy/harmonie?label=download&color=e5445c"></a>
+  <a href="https://github.com/Kehazy/harmonie/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/Kehazy/harmonie/total?color=3b82d6"></a>
+  <a href="https://github.com/Kehazy/harmonie/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/Kehazy/harmonie?style=flat&color=e08a2e"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/Kehazy/harmonie?color=2fa36b"></a>
   <a href="https://spicetify.app"><img alt="Spicetify theme" src="https://img.shields.io/badge/spicetify-theme-8e6be8"></a>
 </p>
 
@@ -36,7 +36,7 @@ Harmonie only changes how Spotify looks. It does not touch ads or Premium featur
 ### Option 1: the Harmonie app (Windows)
 
 1. Install [Spicetify](https://spicetify.app) if you don't have it yet.
-2. Download **[Harmonie.exe](https://github.com/DevStudioss/harmonie/releases/latest)** and run it. No setup needed.
+2. Download **[Harmonie.exe](https://github.com/Kehazy/harmonie/releases/latest)** and run it. No setup needed.
 3. Pick a mode and a color in **Appearance**, then click **Apply to Spotify**.
 
 > Windows SmartScreen may warn about an unknown publisher because the app is not code-signed yet. Click **More info**, then **Run anyway**.
@@ -89,7 +89,7 @@ The app is written to `target/release/harmonie.exe`. If linking fails with `LNK1
 
 ## Contributing
 
-Bug reports, screenshots and ideas are welcome in [Issues](https://github.com/DevStudioss/harmonie/issues). Spotify changes its class names often; if something looks off after an update, a screenshot plus your Spotify version helps fix it fast.
+Bug reports, screenshots and ideas are welcome in [Issues](https://github.com/Kehazy/harmonie/issues). Spotify changes its class names often; if something looks off after an update, a screenshot plus your Spotify version helps fix it fast.
 
 If you like Harmonie, starring the repo helps other people find it.
 

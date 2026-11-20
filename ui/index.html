@@ -397,7 +397,7 @@
       <p class="lead rise" style="--i:2">A calmer Spotify: blurred album art backgrounds, frosted glass and a floating player.</p>
 
       <div class="banners">
-        <div class="banner info" id="updateBanner" hidden><span class="ic"><svg class="i"><use href="#gift"/></svg></span><p><b id="updateText">A new version is available.</b> Download it from GitHub.</p><button class="ghost" data-link="https://github.com/DevStudioss/harmonie/releases/latest">Download</button></div>
+        <div class="banner info" id="updateBanner" hidden><span class="ic"><svg class="i"><use href="#gift"/></svg></span><p><b id="updateText">A new version is available.</b> Download it from GitHub.</p><button class="ghost" data-link="https://github.com/Kehazy/harmonie/releases/latest">Download</button></div>
         <div class="banner warn" id="spicetifyBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Spicetify is not installed.</b> Harmonie needs it to change Spotify's look.</p><button class="ghost" data-link="https://spicetify.app">Get Spicetify</button></div>
         <div class="banner warn" id="storeBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Microsoft Store version of Spotify.</b> Its own Start menu tile opens Spotify without the theme. Use a shortcut that starts it through Spicetify, or install Spotify from spotify.com.</p><button class="ghost" id="shortcut">Create shortcut</button></div>
       </div>
@@ -487,8 +487,8 @@
           </div>
           <p class="note">Harmonie only changes how Spotify looks. It does not touch ads or Premium features.</p>
           <div class="links">
-            <button class="ghost" data-link="https://github.com/DevStudioss/harmonie"><svg class="i"><use href="#star"/></svg>Star on GitHub</button>
-            <button class="ghost" data-link="https://github.com/DevStudioss/harmonie/issues/new/choose"><svg class="i"><use href="#bug"/></svg>Report a bug</button>
+            <button class="ghost" data-link="https://github.com/Kehazy/harmonie"><svg class="i"><use href="#star"/></svg>Star on GitHub</button>
+            <button class="ghost" data-link="https://github.com/Kehazy/harmonie/issues/new/choose"><svg class="i"><use href="#bug"/></svg>Report a bug</button>
           </div>
         </div>
         <div class="feats">
@@ -687,7 +687,7 @@
 
   async function checkForUpdate(current) {
     try {
-      const res = await fetch("https://api.github.com/repos/DevStudioss/harmonie/releases/latest", { headers: { Accept: "application/vnd.github+json" } });
+      const res = await fetch("https://api.github.com/repos/Kehazy/harmonie/releases/latest", { headers: { Accept: "application/vnd.github+json" } });
       if (!res.ok) return;
       const { tag_name } = await res.json();
       if (tag_name && newer(tag_name, current)) {

@@ -24,7 +24,7 @@ const ACCENTS: &[&str] = &["rose", "violet", "blue", "green", "orange"];
 /// Links the app is allowed to open in the browser.
 const LINKS: &[&str] = &[
     "https://spicetify.app",
-    "https://github.com/DevStudioss/harmonie",
+    "https://github.com/Kehazy/harmonie",
 ];
 
 #[derive(Serialize)]
