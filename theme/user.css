@@ -503,6 +503,39 @@ a:hover {
   text-decoration-color: var(--spice-button) !important;
 }
 
+/* ---------- Tooltips ---------- */
+[role="tooltip"] {
+  border-radius: 9px !important;
+  box-shadow: var(--harmonie-edge), 0 12px 28px -10px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* ---------- Keyboard focus in the accent color ---------- */
+:focus-visible {
+  outline: 2px solid var(--spice-button) !important;
+  outline-offset: 2px;
+}
+
+/* ---------- Pages fade in ---------- */
+.main-view-container__scroll-node-child {
+  animation: harmonie-page-in 0.5s var(--harmonie-ease) both;
+}
+
+@keyframes harmonie-page-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+/* ---------- Track rows: accent edge on hover ----------
+   An inset shadow, because Spotify already uses ::before/::after on rows for
+   the drag-and-drop line. */
+.main-trackList-trackListRow {
+  transition: box-shadow 0.3s var(--harmonie-ease), background-color 0.2s;
+}
+
+.main-trackList-trackListRow:hover,
+.main-trackList-trackListRow[aria-selected="true"] {
+  box-shadow: inset 3px 0 0 var(--spice-button);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .Root__top-container::before,
   .main-card-card,
@@ -516,7 +549,12 @@ a:hover {
     animation-duration: 40s !important;
   }
 
-  .harmonie-playing .main-nowPlayingWidget-coverArt {
+  .harmonie-playing .main-nowPlayingWidget-coverArt,
+  .main-view-container__scroll-node-child {
     animation: none !important;
+  }
+
+  .main-trackList-trackListRow {
+    transition: none !important;
   }
 }

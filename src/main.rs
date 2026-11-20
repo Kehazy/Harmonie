@@ -546,6 +546,8 @@ fn main() {
                 let _ = w.set_focus();
             }
         }))
+        // Reopen at the size and position the window had last time.
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             status,
             install,

@@ -417,8 +417,47 @@
   .island.err { border-radius: 18px; }
   .island.err .ic { background: var(--danger); }
   .island .ic svg { width: 13px; height: 13px; stroke-width: 2.6; }
+  .island-action {
+    flex: none; margin-left: 6px; height: 28px; padding: 0 12px; border-radius: 99px; font-size: 12.5px; font-weight: 600;
+    background: rgba(255,255,255,.12); color: #fafafa; transition: background .2s;
+  }
+  .island-action:hover { background: rgba(255,255,255,.2); }
+  .island-action[hidden] { display: none; }
+
+  /* ---------- Presets ---------- */
+  .presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .preset {
+    display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 14px; text-align: left;
+    border: 1px solid transparent; font-size: 12px; color: var(--sub); transition: background .25s, color .25s, border-color .25s, transform .3s var(--spring);
+  }
+  .preset i {
+    display: block; aspect-ratio: 1.5; border-radius: 9px; position: relative; overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+  .preset i::before { content: ""; position: absolute; inset: -30%; background: radial-gradient(circle at 30% 30%, var(--p-accent), transparent 60%); filter: blur(10px); opacity: .9; }
+  .preset i::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: 14%; height: 18%; border-radius: 99px; background: var(--p-panel); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+  .preset:hover { color: var(--text); background: var(--hover); transform: translateY(-1px); }
+  .preset.on { color: var(--text); font-weight: 500; background: var(--raised); border-color: var(--line); box-shadow: var(--edge); }
+  .preset.on i { box-shadow: inset 0 0 0 1.5px var(--accent); }
+
+  /* ---------- Not applied yet ---------- */
+  .pending {
+    display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 10px; border-radius: 99px;
+    font-size: 12px; font-weight: 500; color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent);
+  }
+  .pending::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: breathe 2.4s ease-in-out infinite; }
+  .pending[hidden] { display: none; }
+  .nav-item .badge { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); margin-left: auto; }
+  .nav-item .badge[hidden] { display: none; }
+  .nav-item .badge:not([hidden]) + .kbd { margin-left: 8px; }
 
   @media (max-width: 900px) {
+    .sidebar { width: 72px; }
+    .sidebar .brand { justify-content: center; padding-inline: 0; }
+    .sidebar :is(.brand-text, .label, .switch, .nav-label, .kbd, .now, .collapse) { display: none; }
+    .sidebar :is(.nav-item, .row-toggle) { justify-content: center; padding: 0; }
+    .nav-item .badge { position: absolute; top: 8px; right: 12px; }
+    .controls { max-width: 640px; }
     .home-grid, .look, .about { grid-template-columns: 1fr; }
     .news { grid-template-columns: 1fr; }
     .news div + div { border-left: 0; border-top: 1px solid var(--line); }
@@ -503,7 +542,7 @@
     <p class="nav-label">Menu</p>
     <nav>
       <button class="nav-item on" data-page="home" title="Home"><svg class="i"><use href="#home"/></svg><span class="label">Home</span><span class="kbd">1</span></button>
-      <button class="nav-item" data-page="look" title="Appearance"><svg class="i"><use href="#palette"/></svg><span class="label">Appearance</span><span class="kbd">2</span></button>
+      <button class="nav-item" data-page="look" title="Appearance"><svg class="i"><use href="#palette"/></svg><span class="label">Appearance</span><span class="badge" id="navPending" hidden title="Changes not applied yet"></span><span class="kbd">2</span></button>
       <button class="nav-item" data-page="about" title="About"><svg class="i"><use href="#info"/></svg><span class="label">About</span><span class="kbd">3</span></button>
     </nav>
     <div class="now" title="Current style">
@@ -555,7 +594,10 @@
             <div><span>Player</span><b id="sumPlayer">Floating</b></div>
             <div><span>Pattern</span><b id="sumPattern">Waves</b></div>
           </div>
-          <button class="linkish" data-go="look">Change in Appearance</button>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap">
+            <button class="linkish" data-go="look">Change in Appearance</button>
+            <span class="pending" id="pendingHome" hidden>Not applied yet</span>
+          </div>
           <div class="spacer"></div>
           <div class="actions">
             <button class="primary wide magnetic" id="install"><span>Install theme</span><svg class="i"><use href="#arrow"/></svg></button>
@@ -581,6 +623,10 @@
 
       <div class="look">
         <div class="controls">
+          <div class="rise" style="--i:3">
+            <h2>Presets</h2>
+            <div class="presets" id="presets" role="radiogroup" aria-label="Presets"></div>
+          </div>
           <div class="rise" style="--i:3">
             <h2>Mode</h2>
             <div class="seg" role="radiogroup" aria-label="Mode">
@@ -613,8 +659,9 @@
         <div class="preview-col rise" style="--i:4">
           <div class="tile" data-preview></div>
           <div class="preview-actions">
-            <button class="primary magnetic" id="apply"><span>Apply to Spotify</span><svg class="i"><use href="#arrow"/></svg></button>
+            <button class="primary magnetic" id="apply" title="Ctrl + Enter"><span>Apply to Spotify</span><svg class="i"><use href="#arrow"/></svg></button>
             <button class="reset" id="reset">Reset to defaults</button>
+            <span class="pending" id="pendingLook" hidden>Not applied yet</span>
           </div>
         </div>
       </div>
@@ -651,7 +698,7 @@
   </main>
 </div>
 
-<div class="island" id="island" role="status" aria-live="polite"><span class="ic"><svg class="i" id="islandIcon"><use href="#check"/></svg></span><span id="islandText"></span></div>
+<div class="island" id="island" role="status" aria-live="polite"><span class="ic"><svg class="i" id="islandIcon"><use href="#check"/></svg></span><span id="islandText"></span><button class="island-action" id="islandAction" hidden></button></div>
 
 <script>
   // Outside the app (browser preview): demo data.
@@ -679,6 +726,15 @@
     orange: { name: "Orange", c: "#e08a2e", h: "#e9a050" },
   };
   const DEFAULTS = { art: 42, radius: 14, floating: true, pattern: "waves" };
+
+  const PRESETS = {
+    harmonie: { name: "Harmonie", scheme: "dark", accent: "rose", options: { ...DEFAULTS } },
+    midnight: { name: "Midnight", scheme: "dark", accent: "violet", options: { art: 58, radius: 18, floating: true, pattern: "rings" } },
+    sunset:   { name: "Sunset", scheme: "dark", accent: "orange", options: { art: 68, radius: 20, floating: true, pattern: "waves" } },
+    studio:   { name: "Studio", scheme: "dark", accent: "green", options: { art: 18, radius: 6, floating: false, pattern: "lines" } },
+    daylight: { name: "Daylight", scheme: "light", accent: "blue", options: { art: 36, radius: 14, floating: true, pattern: "dots" } },
+  };
+  let applied = null; // what Spotify has right now, from the status
 
   // Same tiles as the Spotify theme. `size` shrinks them for the small previews.
   const PATTERNS = {
@@ -740,6 +796,12 @@
   $$(".nav-item").forEach((b) => (b.onclick = () => go(b.dataset.page)));
   $$("[data-go]").forEach((b) => (b.onclick = () => go(b.dataset.go)));
   addEventListener("keydown", (e) => {
+    if (e.key === "Escape") return hideIsland();
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (!state.busy && state.status && state.status.spicetify) doInstall($("#page-look").classList.contains("on") ? $("#apply") : $("#install"));
+      return;
+    }
     if (e.target.matches("input")) return;
     const n = Number(e.key);
     if (n >= 1 && n <= pages.length && !e.ctrlKey && !e.altKey && !e.metaKey) go(pages[n - 1]);
@@ -787,7 +849,32 @@
     }
     $("#floating").setAttribute("aria-checked", o.floating);
     $("#floatingSwitch").classList.toggle("on", o.floating);
+    const preset = currentPreset();
+    $$(".preset").forEach((b) => {
+      b.classList.toggle("on", b.dataset.preset === preset);
+      b.setAttribute("aria-checked", b.dataset.preset === preset);
+    });
     paintPreviews();
+    syncPending();
+  }
+
+  function snapshot() {
+    return JSON.stringify([state.scheme, state.accent, state.options.art, state.options.radius, state.options.floating, state.options.pattern]);
+  }
+  function currentPreset() {
+    const now = snapshot();
+    for (const [id, p] of Object.entries(PRESETS)) {
+      const o = p.options;
+      if (JSON.stringify([p.scheme, p.accent, o.art, o.radius, o.floating, o.pattern]) === now) return id;
+    }
+    return null;
+  }
+  // "Not applied yet" when the theme is active and the choices differ from it.
+  function syncPending() {
+    const dirty = applied !== null && applied !== snapshot();
+    $("#pendingLook").hidden = !dirty;
+    $("#pendingHome").hidden = !dirty;
+    $("#navPending").hidden = !dirty;
   }
   function setAccent(id) {
     state.accent = id;
@@ -832,17 +919,43 @@
   }
   $("#reset").onclick = () => { state.options = { ...DEFAULTS }; setScheme("dark"); setAccent("rose"); };
 
+  for (const [id, p] of Object.entries(PRESETS)) {
+    const b = document.createElement("button");
+    b.className = "preset";
+    b.dataset.preset = id;
+    b.setAttribute("role", "radio");
+    const panel = p.scheme === "light" ? "rgba(255,255,255,.8)" : "rgba(24,24,27,.75)";
+    const bg = p.scheme === "light" ? "#ececf1" : "#18181b";
+    b.innerHTML = `<i style="background:${bg}; --p-accent:${ACCENTS[p.accent].c}; --p-panel:${panel}"></i>${p.name}`;
+    b.onclick = () => {
+      state.options = { ...p.options };
+      setScheme(p.scheme);
+      setAccent(p.accent);
+    };
+    $("#presets").appendChild(b);
+  }
+
   /* ----- Island notification ----- */
   let islandTimer;
-  function notify(text, err = false) {
+  let islandHandler = null;
+  function hideIsland() { $("#island").classList.remove("show"); }
+  function notify(text, err = false, action = null) {
     $("#islandText").textContent = text;
     $("#islandIcon use").setAttribute("href", err ? "#x" : "#check");
     $("#island").classList.toggle("err", err);
+    $("#islandAction").hidden = !action;
+    $("#islandAction").textContent = action ? action.label : "";
+    islandHandler = action ? action.run : null;
     $("#island").classList.add("show");
     clearTimeout(islandTimer);
-    islandTimer = setTimeout(() => $("#island").classList.remove("show"), err ? 8000 : 3200);
+    islandTimer = setTimeout(hideIsland, err ? 8000 : action ? 7000 : 3200);
   }
-  $("#island").onclick = () => $("#island").classList.remove("show");
+  $("#islandAction").onclick = (e) => {
+    e.stopPropagation();
+    hideIsland();
+    if (islandHandler) islandHandler();
+  };
+  $("#island").onclick = hideIsland;
 
   /* ----- Magnetic buttons ----- */
   $$(".magnetic").forEach((el) => {
@@ -884,17 +997,25 @@
 
   async function refresh(first = false) {
     state.status = await invoke("status");
-    if (first && state.status.active) {
-      if (state.status.options) state.options = { ...DEFAULTS, ...state.status.options };
-      setScheme(state.status.scheme);
-      if (ACCENTS[state.status.accent]) setAccent(state.status.accent);
+    const s = state.status;
+    if (first && s.active) {
+      if (s.options) state.options = { ...DEFAULTS, ...s.options };
+      setScheme(s.scheme);
+      if (ACCENTS[s.accent]) setAccent(s.accent);
     }
+    if (s.active) {
+      const o = { ...DEFAULTS, ...(s.options || {}) };
+      applied = JSON.stringify([s.scheme, ACCENTS[s.accent] ? s.accent : "rose", o.art, o.radius, o.floating, o.pattern]);
+    } else {
+      applied = null;
+    }
+    syncPending();
     render();
     if (first && pages.includes(state.status.start_page)) go(state.status.start_page);
     if (first) checkForUpdate(state.status.version);
   }
 
-  async function run(button, busyLabel, cmd, args, done) {
+  async function run(button, busyLabel, cmd, args, done, action = null) {
     const label = button.querySelector("span");
     const original = label.textContent;
     state.busy = true;
@@ -902,7 +1023,7 @@
     label.textContent = busyLabel;
     try {
       await invoke(cmd, args);
-      notify(done);
+      notify(done, false, action);
     } catch (e) {
       const lines = String(e).split("\n").filter(Boolean);
       if (lines.length > 1) console.warn("Harmonie:", lines.slice(1).join("\n"));
@@ -914,8 +1035,13 @@
     }
   }
 
+  const openSpotify = () =>
+    invoke("open_spotify")
+      .then(() => notify("Opening Spotify…"))
+      .catch((e) => notify(String(e), true));
   const doInstall = (btn) =>
-    run(btn, "Applying…", "install", { scheme: state.scheme, accent: state.accent, options: state.options }, "Theme applied. Spotify is restarting.");
+    run(btn, "Applying…", "install", { scheme: state.scheme, accent: state.accent, options: state.options },
+      "Theme applied.", { label: "Open Spotify", run: openSpotify });
   $("#install").onclick = () => doInstall($("#install"));
   $("#apply").onclick = () => doInstall($("#apply"));
   $("#remove").onclick = () => run($("#remove"), "Removing…", "uninstall", {}, "Theme removed. Your previous theme is back.");
@@ -925,10 +1051,7 @@
     $("#storeBanner").hidden = true;
   };
 
-  $("#openSpotify").onclick = () =>
-    invoke("open_spotify")
-      .then(() => notify("Opening Spotify…"))
-      .catch((e) => notify(String(e), true));
+  $("#openSpotify").onclick = openSpotify;
 
   $("#shortcut").onclick = async () => {
     const b = $("#shortcut");

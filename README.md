@@ -29,6 +29,8 @@
 - **Floating player** — the bottom player becomes a rounded glass card (or stays docked, your choice)
 - **5 accent colors** — rose, violet, blue, green, orange, in dark and light (10 schemes)
 - **Your own look** — tune the album art strength, corners, player style and pattern with a live preview
+- **Presets** — Harmonie, Midnight, Sunset, Studio and Daylight in one click
+- **Small touches** — accent edge on hovered tracks, accent keyboard focus, pages that fade in, rounded tooltips
 - **Survives Spotify updates** — the app repairs Spicetify's backup when Spotify updates
 - **One-click install and undo** — the app restores the theme you had before
 - **Tiny and fast** — the installer is a 3 MB native Rust app, no Electron
@@ -41,7 +43,7 @@ Harmonie only changes how Spotify looks. It does not touch ads or Premium featur
 
 1. Install [Spicetify](https://spicetify.app) if you don't have it yet.
 2. Download **[Harmonie.exe](https://github.com/Kehazy/harmonie/releases/latest)** and run it. No setup needed.
-3. Pick a mode and a color in **Appearance**, then click **Apply to Spotify**.
+3. Pick a preset, or a mode, color and pattern in **Appearance**, then click **Apply to Spotify** (or press **Ctrl + Enter**).
 
 > Windows SmartScreen may warn about an unknown publisher because the app is not code-signed yet. Click **More info**, then **Run anyway**.
 
