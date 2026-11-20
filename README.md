@@ -22,10 +22,12 @@
 ## Features
 
 - **Blurred album art** — the colors of the current cover fill the window and change with every track
-- **Frosted glass** — translucent panels and rounded corners everywhere
-- **Floating player** — the bottom player becomes a rounded glass card
-- **5 accent colors** — rose, violet, blue, green, orange
-- **Dark and light** — 10 color schemes in total
+- **Apple Music-style lyrics** — lyrics float over the blurred cover, current line in bold
+- **Frosted glass** — translucent panels, pill search bar, soft shadows on covers
+- **Floating player** — the bottom player becomes a rounded glass card (or stays docked, your choice)
+- **5 accent colors** — rose, violet, blue, green, orange, in dark and light (10 schemes)
+- **Your own look** — tune the album art strength, corner roundness and player style with a live preview
+- **Survives Spotify updates** — the app repairs Spicetify's backup when Spotify updates
 - **One-click install and undo** — the app restores the theme you had before
 - **Tiny and fast** — the installer is a 3 MB native Rust app, no Electron
 
@@ -55,6 +57,15 @@ spicetify apply
 ```
 
 Available schemes: `dark`, `light`, `dark-violet`, `light-violet`, `dark-blue`, `light-blue`, `dark-green`, `light-green`, `dark-orange`, `light-orange`.
+
+To change the look by hand, edit the **Options** block at the top of `user.css`:
+
+```css
+--harmonie-art-opacity: 0.42;   /* 0 hides the blurred album art */
+--harmonie-radius: 14px;        /* panel corners */
+--harmonie-player-gap: 10px;    /* 0 docks the player to the window edge */
+--harmonie-player-radius: 20px;
+```
 
 ## Screenshots
 

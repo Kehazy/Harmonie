@@ -1,7 +1,7 @@
 [
   {
     "name": "Harmonie",
-    "description": "Clean, Apple Music-inspired theme: blurred album art background, frosted glass panels, floating player and five accent colors in dark and light.",
+    "description": "Clean, Apple Music-inspired theme: blurred album art background, Apple Music-style lyrics, frosted glass panels, floating player and five accent colors in dark and light.",
     "preview": "assets/app-home.png",
     "readme": "README.md",
     "usercss": "theme/user.css",

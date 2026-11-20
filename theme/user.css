@@ -1,14 +1,31 @@
-/* Harmonie — a clean Spicetify theme inspired by Apple Music */
+/* Harmonie 3 — a clean Spicetify theme inspired by Apple Music */
+
+/* ---------- Options ----------
+   The Harmonie app rewrites this block when you change options.
+   You can also edit these values by hand. */
+:root {
+  --harmonie-art-opacity: 0.42;   /* 0 hides the blurred album art */
+  --harmonie-art-blur: 110px;
+  --harmonie-radius: 14px;        /* panel corners */
+  --harmonie-player-gap: 10px;    /* 0 docks the player to the window edge */
+  --harmonie-player-radius: 20px;
+}
+/* ---------- End of options ---------- */
 
 :root {
   --harmonie-font: -apple-system, "SF Pro Display", "SF Pro Text", "Segoe UI Variable Display",
-    "Segoe UI Variable", "Inter", "Segoe UI", system-ui, sans-serif;
-  --harmonie-radius: 12px;
-  --harmonie-radius-sm: 8px;
-  --harmonie-glass: rgba(var(--spice-rgb-main), 0.62);
-  --harmonie-glass-strong: rgba(var(--spice-rgb-main), 0.8);
+    "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --harmonie-radius-sm: calc(var(--harmonie-radius) * 0.6);
+  --harmonie-glass: rgba(var(--spice-rgb-main), 0.58);
+  --harmonie-glass-strong: rgba(var(--spice-rgb-main), 0.78);
+  --harmonie-line: rgba(var(--spice-rgb-text), 0.07);
+  --harmonie-edge: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --harmonie-hover: rgba(var(--spice-rgb-text), 0.07);
-  --harmonie-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --harmonie-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::selection {
+  background: rgba(var(--spice-rgb-button), 0.35);
 }
 
 /* ---------- Typography ---------- */
@@ -21,11 +38,17 @@ textarea,
   -webkit-font-smoothing: antialiased;
 }
 
+h1.encore-text,
 .main-entityHeader-title h1,
-.main-entityHeader-title .encore-text,
-h1.encore-text {
+.main-entityHeader-title .encore-text {
   font-weight: 700 !important;
-  letter-spacing: -0.025em !important;
+  letter-spacing: -0.03em !important;
+}
+
+.main-shelf-shelf h2,
+.main-shelf-shelf h2 a {
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
 }
 
 /* ---------- Blurred background from the album art ---------- */
@@ -37,21 +60,23 @@ h1.encore-text {
 .Root__top-container::before {
   content: "";
   position: fixed;
-  inset: -120px;
+  inset: -160px;
   z-index: -1;
   pointer-events: none;
   background-image: var(--harmonie-art, none);
   background-size: cover;
   background-position: center;
-  filter: blur(110px) saturate(1.8);
-  opacity: 0.38;
-  transition: background-image 0.8s var(--harmonie-ease);
+  filter: blur(var(--harmonie-art-blur)) saturate(1.7);
+  opacity: var(--harmonie-art-opacity);
+  transform: translateZ(0);
+  transition: background-image 0.9s var(--harmonie-ease), opacity 0.6s var(--harmonie-ease);
 }
 
 /* Translucent panels */
 .Root__nav-bar,
 .Root__main-view,
-.Root__right-sidebar {
+.Root__right-sidebar,
+.Root__globalNav {
   background: transparent !important;
 }
 
@@ -60,6 +85,7 @@ h1.encore-text {
 .Root__right-sidebar > * {
   background-color: var(--harmonie-glass) !important;
   border-radius: var(--harmonie-radius) !important;
+  box-shadow: var(--harmonie-edge);
 }
 
 .main-view-container,
@@ -83,60 +109,87 @@ h1.encore-text {
   backdrop-filter: blur(30px) saturate(1.6);
 }
 
-.Root__globalNav {
-  background: transparent !important;
+/* Search bar as a pill */
+.main-globalNav-searchInputContainer,
+.x-searchInput-searchInputInput,
+[data-testid="search-input"] {
+  border-radius: 999px !important;
+}
+
+.x-searchInput-searchInputInput,
+[data-testid="search-input"] {
+  background-color: rgba(var(--spice-rgb-text), 0.08) !important;
+  box-shadow: inset 0 0 0 1px var(--harmonie-line) !important;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.x-searchInput-searchInputInput:focus,
+[data-testid="search-input"]:focus {
+  background-color: rgba(var(--spice-rgb-text), 0.12) !important;
+  box-shadow: inset 0 0 0 1.5px rgba(var(--spice-rgb-button), 0.8) !important;
 }
 
 /* ---------- Bottom player as a floating card ---------- */
 .Root__now-playing-bar {
   background: transparent !important;
-  padding: 0 8px 8px;
+  padding: 0 var(--harmonie-player-gap) var(--harmonie-player-gap);
 }
 
 .main-nowPlayingBar-container,
 .Root__now-playing-bar footer {
   background-color: var(--harmonie-glass-strong) !important;
   backdrop-filter: blur(40px) saturate(1.8);
-  border-radius: 16px !important;
-  border: 1px solid rgba(var(--spice-rgb-text), 0.06);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  border-radius: var(--harmonie-player-radius) !important;
+  border: 1px solid var(--harmonie-line);
+  box-shadow: var(--harmonie-edge), 0 16px 40px -12px rgba(0, 0, 0, 0.45);
 }
 
 .main-nowPlayingWidget-coverArt img,
 .main-nowPlayingWidget-coverArt .cover-art,
 .main-coverSlotCollapsed-container img {
-  border-radius: 6px !important;
+  border-radius: 7px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* Accent-colored progress and volume bars */
+/* Accent progress and volume bars that grow on hover */
 .progress-bar {
   --fg-color: var(--spice-button) !important;
   --is-active-fg-color: var(--spice-button) !important;
-  --bg-color: rgba(var(--spice-rgb-text), 0.18) !important;
+  --bg-color: rgba(var(--spice-rgb-text), 0.16) !important;
+  --progress-bar-height: 4px;
 }
 
-/* Main play button */
+[data-testid="playback-progressbar"]:hover .progress-bar,
+.main-nowPlayingBar-volumeBar:hover .progress-bar {
+  --progress-bar-height: 6px;
+}
+
+/* Play buttons */
 .main-playButton-PlayButton button,
 .main-playButton-PlayButton > button > span,
-[data-testid="play-button"] > span,
-.encore-bright-accent-set {
+[data-testid="play-button"] > span {
   --background-base: var(--spice-button) !important;
   --background-highlight: var(--spice-button-active) !important;
   --background-press: var(--spice-button-active) !important;
   color: #fff !important;
+  box-shadow: 0 8px 20px -8px rgba(var(--spice-rgb-button), 0.8);
 }
 
 [data-testid="control-button-playpause"] {
   background-color: var(--spice-text) !important;
   color: var(--spice-main) !important;
-  transition: transform 0.15s var(--harmonie-ease);
+  transition: transform 0.25s var(--harmonie-ease);
 }
 
 [data-testid="control-button-playpause"]:hover {
-  transform: scale(1.06);
+  transform: scale(1.07);
 }
 
-/* Active buttons (shuffle, repeat, like) in accent color */
+[data-testid="control-button-playpause"]:active {
+  transform: scale(0.96);
+}
+
+/* Active buttons (shuffle, repeat, like) in the accent color */
 [data-testid="control-button-shuffle"][aria-checked="true"],
 [data-testid="control-button-repeat"][aria-checked="true"],
 .main-addButton-active {
@@ -159,22 +212,27 @@ h1.encore-text {
 
 .main-entityHeader-image,
 .main-entityHeader-imagePlaceholder {
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, 0.55) !important;
 }
 
 .main-card-card {
   background: transparent !important;
   border-radius: var(--harmonie-radius) !important;
-  transition: background-color 0.2s var(--harmonie-ease), transform 0.2s var(--harmonie-ease);
+  transition: background-color 0.25s var(--harmonie-ease);
 }
 
 .main-card-card:hover {
   background: var(--harmonie-hover) !important;
 }
 
+.main-cardImage-imageWrapper {
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.5);
+  transition: transform 0.4s var(--harmonie-ease), box-shadow 0.4s var(--harmonie-ease);
+}
+
 .main-card-card:hover .main-cardImage-imageWrapper {
-  transform: scale(1.02);
-  transition: transform 0.25s var(--harmonie-ease);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 32px -14px rgba(0, 0, 0, 0.6);
 }
 
 /* ---------- Track lists ---------- */
@@ -193,7 +251,7 @@ h1.encore-text {
 
 .main-trackList-trackListHeader {
   background-color: transparent !important;
-  border-bottom: 1px solid rgba(var(--spice-rgb-text), 0.08);
+  border-bottom: 1px solid var(--harmonie-line);
 }
 
 /* ---------- Library (sidebar) ---------- */
@@ -206,6 +264,11 @@ h1.encore-text {
   background-color: var(--harmonie-hover) !important;
 }
 
+.main-yourLibraryX-listItem[aria-selected="true"],
+.main-yourLibraryX-libraryItemContainer [aria-selected="true"] > div {
+  background-color: rgba(var(--spice-rgb-button), 0.14) !important;
+}
+
 /* Filter chips */
 .main-yourLibraryX-filterArea button > span,
 .search-searchCategory-categoryGrid button > span,
@@ -214,12 +277,22 @@ h1.encore-text {
   border-radius: 999px !important;
 }
 
-/* Search field */
-.x-searchInput-searchInputInput,
-[data-testid="search-input"] {
-  border-radius: 10px !important;
-  background-color: rgba(var(--spice-rgb-text), 0.08) !important;
-  box-shadow: none !important;
+/* ---------- Now Playing panel ---------- */
+.main-nowPlayingView-coverArtContainer img,
+.main-nowPlayingView-coverArt {
+  border-radius: var(--harmonie-radius) !important;
+  box-shadow: 0 24px 48px -18px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- Lyrics, Apple Music style ---------- */
+[style*="--lyrics-color-background"] {
+  --lyrics-color-background: transparent !important;
+  --lyrics-color-active: rgb(var(--spice-rgb-text)) !important;
+  --lyrics-color-passed: rgba(var(--spice-rgb-text), 0.5) !important;
+  --lyrics-color-inactive: rgba(var(--spice-rgb-text), 0.28) !important;
+  background-color: transparent !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 /* ---------- Menus and dialogs ---------- */
@@ -229,12 +302,12 @@ h1.encore-text {
   background-color: var(--harmonie-glass-strong) !important;
   backdrop-filter: blur(40px) saturate(1.8);
   border-radius: var(--harmonie-radius) !important;
-  border: 1px solid rgba(var(--spice-rgb-text), 0.08);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid var(--harmonie-line);
+  box-shadow: var(--harmonie-edge), 0 24px 60px -12px rgba(0, 0, 0, 0.5) !important;
 }
 
 .main-contextMenu-menuItemButton {
-  border-radius: 6px !important;
+  border-radius: 7px !important;
 }
 
 .main-contextMenu-menuItemButton:hover {
@@ -258,7 +331,6 @@ h1.encore-text {
   background: transparent !important;
 }
 
-/* Links and accents */
 a:hover {
   text-decoration-color: var(--spice-button) !important;
 }
@@ -266,6 +338,7 @@ a:hover {
 @media (prefers-reduced-motion: reduce) {
   .Root__top-container::before,
   .main-card-card,
+  .main-cardImage-imageWrapper,
   [data-testid="control-button-playpause"] {
     transition: none !important;
   }

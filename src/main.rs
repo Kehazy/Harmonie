@@ -1,7 +1,7 @@
 // Harmonie: installs a clean, Apple Music–inspired theme on Spotify through Spicetify.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     env, fs,
     io::Write,
@@ -27,6 +27,80 @@ const LINKS: &[&str] = &[
     "https://github.com/Kehazy/harmonie",
 ];
 
+/// Look options written into the theme's CSS variables.
+#[derive(Serialize, Deserialize, Clone, Copy)]
+struct Options {
+    /// Blurred album art strength, 0 to 80 (percent opacity).
+    art: u8,
+    /// Panel corner radius in pixels, 0 to 24.
+    radius: u8,
+    /// Floating player card, or docked to the window edge.
+    floating: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options { art: 42, radius: 14, floating: true }
+    }
+}
+
+const OPTIONS_START: &str = "/* ---------- Options ----------";
+const OPTIONS_END: &str = "/* ---------- End of options ---------- */";
+
+impl Options {
+    fn clamped(self) -> Self {
+        Options { art: self.art.min(80), radius: self.radius.min(24), floating: self.floating }
+    }
+
+    fn css_block(self) -> String {
+        let (gap, player_radius) = if self.floating {
+            (10, self.radius as u32 + 6)
+        } else {
+            (0, 0)
+        };
+        let lines = [
+            OPTIONS_START.to_string(),
+            "   Written by the Harmonie app. You can also edit these values by hand. */".into(),
+            ":root {".into(),
+            format!("  --harmonie-art-opacity: {:.2};", self.art as f32 / 100.0),
+            "  --harmonie-art-blur: 110px;".into(),
+            format!("  --harmonie-radius: {}px;", self.radius),
+            format!("  --harmonie-player-gap: {gap}px;"),
+            format!("  --harmonie-player-radius: {player_radius}px;"),
+            "}".into(),
+            OPTIONS_END.to_string(),
+        ];
+        lines.join("\n")
+    }
+
+    /// The theme's CSS with this options block in place of the default one.
+    fn apply_to(self, css: &str) -> String {
+        match (css.find(OPTIONS_START), css.find(OPTIONS_END)) {
+            (Some(a), Some(b)) if b > a => {
+                format!("{}{}{}", &css[..a], self.css_block(), &css[b + OPTIONS_END.len()..])
+            }
+            _ => css.to_string(),
+        }
+    }
+
+    /// Reads the options back from an installed user.css.
+    fn parse(css: &str) -> Self {
+        let var = |name: &str| -> Option<f32> {
+            let i = css.find(&format!("--harmonie-{name}:"))?;
+            let rest = &css[i..];
+            let value = rest[rest.find(':')? + 1..rest.find(';')?].trim();
+            value.trim_end_matches("px").parse().ok()
+        };
+        let d = Options::default();
+        Options {
+            art: var("art-opacity").map_or(d.art, |v| (v * 100.0).round() as u8),
+            radius: var("radius").map_or(d.radius, |v| v as u8),
+            floating: var("player-gap").map_or(d.floating, |v| v > 0.0),
+        }
+        .clamped()
+    }
+}
+
 #[derive(Serialize)]
 struct Status {
     version: &'static str,
@@ -36,6 +110,9 @@ struct Status {
     scheme: String,
     accent: String,
     current_theme: String,
+    options: Options,
+    /// Page to open first, from HARMONIE_PAGE (used to take screenshots).
+    start_page: Option<String>,
     /// Spotify from the Microsoft Store, which Spicetify does not fully support.
     store_spotify: bool,
 }
@@ -188,10 +265,16 @@ async fn status() -> Status {
         scheme: "dark".into(),
         accent: "rose".into(),
         current_theme: String::new(),
+        options: Options::default(),
+        start_page: env::var("HARMONIE_PAGE").ok(),
         store_spotify: false,
     };
     if let Ok(dir) = config_dir() {
-        s.installed = dir.join("Themes").join(THEME).join("user.css").exists();
+        let css = dir.join("Themes").join(THEME).join("user.css");
+        s.installed = css.exists();
+        if let Ok(text) = fs::read_to_string(&css) {
+            s.options = Options::parse(&text);
+        }
         s.current_theme = read_setting(&dir, "current_theme");
         s.active = s.current_theme == THEME;
         if s.active {
@@ -205,7 +288,8 @@ async fn status() -> Status {
 }
 
 #[tauri::command]
-async fn install(scheme: String, accent: String) -> Result<String, String> {
+async fn install(scheme: String, accent: String, options: Option<Options>) -> Result<String, String> {
+    let options = options.unwrap_or_default().clamped();
     if scheme != "dark" && scheme != "light" {
         return Err("Unknown mode.".into());
     }
@@ -229,9 +313,10 @@ async fn install(scheme: String, accent: String) -> Result<String, String> {
         fs::write(dir.join(PREVIOUS_FILE), previous).map_err(|e| e.to_string())?;
     }
 
+    let user_css = options.apply_to(USER_CSS);
     for (name, content) in [
         ("color.ini", COLOR_INI),
-        ("user.css", USER_CSS),
+        ("user.css", user_css.as_str()),
         ("theme.js", THEME_JS),
     ] {
         fs::write(theme_dir.join(name), content).map_err(|e| e.to_string())?;
