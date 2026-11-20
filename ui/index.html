@@ -271,6 +271,32 @@
       radial-gradient(circle at 40% 80%, #f97316 0, transparent 40%);
     transition: opacity .5s var(--spring);
   }
+  .pv-pattern {
+    position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-color: var(--pv-text); opacity: var(--pv-pat-opacity, .14);
+    -webkit-mask-image: var(--pv-pat, none), radial-gradient(ellipse at 50% 40%, #000 0%, rgba(0,0,0,.35) 70%, transparent 100%);
+    -webkit-mask-repeat: repeat, no-repeat;
+    -webkit-mask-size: var(--pv-pat-size, auto), 100% 100%;
+    -webkit-mask-composite: source-in;
+    transition: opacity .5s var(--spring);
+  }
+  .patterns { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .pat {
+    display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 8px 4px 10px; border-radius: 14px;
+    font-size: 12px; color: var(--sub); border: 1px solid transparent; transition: background .25s, color .25s, border-color .25s;
+  }
+  .pat i {
+    width: 100%; aspect-ratio: 1.4; border-radius: 9px; display: block; position: relative; overflow: hidden;
+    background: var(--hover); box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .pat i::after {
+    content: ""; position: absolute; inset: 0; background-color: var(--text); opacity: .55;
+    -webkit-mask-image: var(--pat); -webkit-mask-repeat: repeat; -webkit-mask-size: var(--pat-size, auto);
+  }
+  .pat[data-pattern="none"] i::after { -webkit-mask-image: none; background: linear-gradient(135deg, transparent 47%, var(--faint) 48% 52%, transparent 53%); opacity: .6; }
+  .pat:hover { color: var(--text); background: var(--hover); }
+  .pat.on { background: var(--raised); border-color: var(--line); color: var(--text); font-weight: 500; box-shadow: var(--edge); }
+  .pat.on i { box-shadow: inset 0 0 0 1.5px var(--accent); }
   .pv-panel { border-radius: calc(var(--pv-radius) * 0.45px); background: var(--pv-panel); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); transition: border-radius .4s var(--spring); }
   .pv-side { padding: 9px 7px; display: flex; flex-direction: column; gap: 6px; }
   .pv-lib { display: grid; grid-template-columns: 14px 1fr; gap: 5px; align-items: center; }
@@ -438,6 +464,7 @@
 <template id="pv-tpl">
   <div class="pv">
     <div class="pv-art-bg"></div>
+    <div class="pv-pattern"></div>
     <div class="pv-panel pv-side">
       <div class="pv-lib"><i></i><b style="width:70%"></b></div>
       <div class="pv-lib on"><i></i><b style="width:55%"></b></div>
@@ -526,6 +553,7 @@
             <div><span>Album art</span><b id="sumArt">42%</b></div>
             <div><span>Corners</span><b id="sumRadius">14 px</b></div>
             <div><span>Player</span><b id="sumPlayer">Floating</b></div>
+            <div><span>Pattern</span><b id="sumPattern">Waves</b></div>
           </div>
           <button class="linkish" data-go="look">Change in Appearance</button>
           <div class="spacer"></div>
@@ -576,6 +604,10 @@
             <span><b>Floating player</b><small>A rounded card above the window edge</small></span>
             <span class="switch on" id="floatingSwitch"></span>
           </button>
+          <div class="rise" style="--i:8">
+            <h2>Background pattern</h2>
+            <div class="patterns" id="patterns" role="radiogroup" aria-label="Background pattern"></div>
+          </div>
         </div>
 
         <div class="preview-col rise" style="--i:4">
@@ -628,7 +660,7 @@
     : async (cmd, args) => {
         if (cmd === "status") {
           await new Promise((r) => setTimeout(r, 700));
-          return { version: "3.0.0", spicetify: "2.46.7", installed: true, active: true, scheme: "dark", accent: "rose", current_theme: "Harmonie", store_spotify: true, options: { art: 42, radius: 14, floating: true } };
+          return { version: "3.0.0", spicetify: "2.46.7", installed: true, active: true, scheme: "dark", accent: "rose", current_theme: "Harmonie", store_spotify: true, options: { art: 42, radius: 14, floating: true, pattern: "waves" } };
         }
         if (cmd === "open_link") return void window.open(args.url, "_blank");
         if (cmd === "create_shortcut") return "Shortcut created on your desktop.";
@@ -646,7 +678,16 @@
     green:  { name: "Green",  c: "#2fa36b", h: "#48b97f" },
     orange: { name: "Orange", c: "#e08a2e", h: "#e9a050" },
   };
-  const DEFAULTS = { art: 42, radius: 14, floating: true };
+  const DEFAULTS = { art: 42, radius: 14, floating: true, pattern: "waves" };
+
+  // Same tiles as the Spotify theme. `size` shrinks them for the small previews.
+  const PATTERNS = {
+    none:  { name: "None",  url: "none", size: "auto" },
+    waves: { name: "Waves", url: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='28'%3E%3Cpath d='M0 14 C20 2 60 2 80 14 S140 26 160 14' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E")`, size: "64px 11px" },
+    dots:  { name: "Dots",  url: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='11' cy='11' r='1.4' fill='%23000'/%3E%3C/svg%3E")`, size: "10px 10px" },
+    lines: { name: "Lines", url: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath d='M-4 4 L4 -4 M0 14 L14 0 M10 18 L18 10' stroke='%23000' stroke-width='1'/%3E%3C/svg%3E")`, size: "7px 7px" },
+    rings: { name: "Rings", url: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Cg fill='none' stroke='%23000' stroke-width='1'%3E%3Ccircle cx='36' cy='36' r='9'/%3E%3Ccircle cx='36' cy='36' r='20'/%3E%3Ccircle cx='36' cy='36' r='31'/%3E%3C/g%3E%3C/svg%3E")`, size: "30px 30px" },
+  };
   const state = { scheme: "dark", accent: "rose", options: { ...DEFAULTS }, busy: false, status: null };
 
   function pref(key, value) {
@@ -682,6 +723,10 @@
       pv.style.setProperty("--pv-radius", o.radius);
       pv.style.setProperty("--pv-gap", o.floating ? 10 : 0);
       pv.style.setProperty("--pv-player-radius", o.floating ? o.radius + 6 : 0);
+      const pat = PATTERNS[o.pattern] || PATTERNS.waves;
+      pv.style.setProperty("--pv-pat", pat.url);
+      pv.style.setProperty("--pv-pat-size", pat.size);
+      pv.style.setProperty("--pv-pat-opacity", o.pattern === "none" ? 0 : 0.16);
     });
   }
 
@@ -727,6 +772,11 @@
     $("#sumArt").textContent = o.art ? o.art + "%" : "Off";
     $("#sumRadius").textContent = o.radius + " px";
     $("#sumPlayer").textContent = o.floating ? "Floating" : "Docked";
+    $("#sumPattern").textContent = (PATTERNS[o.pattern] || PATTERNS.waves).name;
+    $$(".pat").forEach((b) => {
+      b.classList.toggle("on", b.dataset.pattern === o.pattern);
+      b.setAttribute("aria-checked", b.dataset.pattern === o.pattern);
+    });
     $("#artOut").textContent = o.art ? o.art + "%" : "Off";
     $("#radiusOut").textContent = o.radius + " px";
     $("#art").value = o.art;
@@ -771,6 +821,15 @@
   $("#art").oninput = (e) => { state.options.art = Number(e.target.value); sync(); };
   $("#radius").oninput = (e) => { state.options.radius = Number(e.target.value); sync(); };
   $("#floating").onclick = () => { state.options.floating = !state.options.floating; sync(); };
+  for (const [id, pat] of Object.entries(PATTERNS)) {
+    const b = document.createElement("button");
+    b.className = "pat";
+    b.dataset.pattern = id;
+    b.setAttribute("role", "radio");
+    b.innerHTML = `<i style='--pat: ${pat.url.replace(/'/g, "&#39;")}; --pat-size: ${pat.size}'></i>${pat.name}`;
+    b.onclick = () => { state.options.pattern = id; sync(); };
+    $("#patterns").appendChild(b);
+  }
   $("#reset").onclick = () => { state.options = { ...DEFAULTS }; setScheme("dark"); setAccent("rose"); };
 
   /* ----- Island notification ----- */

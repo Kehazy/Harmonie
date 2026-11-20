@@ -28,6 +28,36 @@ const LINKS: &[&str] = &[
     "https://github.com/Kehazy/harmonie",
 ];
 
+/// Background pattern drawn between the blurred art and the glass panels.
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Debug, Default)]
+#[serde(rename_all = "lowercase")]
+enum Pattern {
+    None,
+    #[default]
+    Waves,
+    Dots,
+    Lines,
+    Rings,
+}
+
+impl Pattern {
+    const ALL: [Pattern; 5] = [Pattern::None, Pattern::Waves, Pattern::Dots, Pattern::Lines, Pattern::Rings];
+
+    fn name(self) -> &'static str {
+        match self {
+            Pattern::None => "none",
+            Pattern::Waves => "waves",
+            Pattern::Dots => "dots",
+            Pattern::Lines => "lines",
+            Pattern::Rings => "rings",
+        }
+    }
+
+    fn from_name(name: &str) -> Option<Self> {
+        Pattern::ALL.into_iter().find(|p| p.name() == name)
+    }
+}
+
 /// Look options written into the theme's CSS variables.
 #[derive(Serialize, Deserialize, Clone, Copy)]
 struct Options {
@@ -37,11 +67,14 @@ struct Options {
     radius: u8,
     /// Floating player card, or docked to the window edge.
     floating: bool,
+    /// Background pattern. Older app versions do not send it.
+    #[serde(default)]
+    pattern: Pattern,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Options { art: 42, radius: 14, floating: true }
+        Options { art: 42, radius: 14, floating: true, pattern: Pattern::Waves }
     }
 }
 
@@ -50,7 +83,7 @@ const OPTIONS_END: &str = "/* ---------- End of options ---------- */";
 
 impl Options {
     fn clamped(self) -> Self {
-        Options { art: self.art.min(80), radius: self.radius.min(24), floating: self.floating }
+        Options { art: self.art.min(80), radius: self.radius.min(24), ..self }
     }
 
     fn css_block(self) -> String {
@@ -68,6 +101,15 @@ impl Options {
             format!("  --harmonie-radius: {}px;", self.radius),
             format!("  --harmonie-player-gap: {gap}px;"),
             format!("  --harmonie-player-radius: {player_radius}px;"),
+            format!(
+                "  --harmonie-pattern: var(--harmonie-pattern-{}); /* waves, dots, lines, rings or none */",
+                self.pattern.name()
+            ),
+            // With no pattern the layer would be a solid tint, so hide it.
+            format!(
+                "  --harmonie-pattern-opacity: {};",
+                if self.pattern == Pattern::None { "0" } else { "0.1" }
+            ),
             "}".into(),
             OPTIONS_END.to_string(),
         ];
@@ -92,11 +134,17 @@ impl Options {
             let value = rest[rest.find(':')? + 1..rest.find(';')?].trim();
             value.trim_end_matches("px").parse().ok()
         };
+        let pattern = css
+            .find("--harmonie-pattern: var(--harmonie-pattern-")
+            .map(|i| &css[i + "--harmonie-pattern: var(--harmonie-pattern-".len()..])
+            .and_then(|rest| rest.split(')').next())
+            .and_then(Pattern::from_name);
         let d = Options::default();
         Options {
             art: var("art-opacity").map_or(d.art, |v| (v * 100.0).round() as u8),
             radius: var("radius").map_or(d.radius, |v| v as u8),
             floating: var("player-gap").map_or(d.floating, |v| v > 0.0),
+            pattern: pattern.unwrap_or(d.pattern),
         }
         .clamped()
     }
@@ -518,11 +566,13 @@ mod tests {
     fn options_round_trip() {
         let defaults = Options::parse(USER_CSS);
         assert_eq!((defaults.art, defaults.radius, defaults.floating), (42, 14, true));
+        assert_eq!(defaults.pattern, Pattern::Waves);
 
-        let o = Options { art: 20, radius: 6, floating: false };
+        let o = Options { art: 20, radius: 6, floating: false, pattern: Pattern::Rings };
         let css = o.apply_to(USER_CSS);
         let back = Options::parse(&css);
         assert_eq!((back.art, back.radius, back.floating), (20, 6, false));
+        assert_eq!(back.pattern, Pattern::Rings);
         assert!(css.contains("--harmonie-player-gap: 0px;"));
         // Only the options block changes.
         assert_eq!(css.matches(OPTIONS_START).count(), 1);
@@ -531,8 +581,26 @@ mod tests {
 
     #[test]
     fn options_are_clamped() {
-        let o = Options { art: 200, radius: 99, floating: true }.clamped();
+        let o = Options { art: 200, radius: 99, floating: true, pattern: Pattern::Dots }.clamped();
         assert_eq!((o.art, o.radius), (80, 24));
+        assert_eq!(o.pattern, Pattern::Dots);
+    }
+
+    #[test]
+    fn every_pattern_exists_in_the_theme() {
+        for p in Pattern::ALL {
+            let css = Options { pattern: p, ..Options::default() }.apply_to(USER_CSS);
+            assert!(USER_CSS.contains(&format!("--harmonie-pattern-{}:", p.name())), "{}", p.name());
+            assert_eq!(Options::parse(&css).pattern, p);
+            let hidden = css.contains("--harmonie-pattern-opacity: 0;");
+            assert_eq!(hidden, p == Pattern::None, "{}", p.name());
+        }
+    }
+
+    #[test]
+    fn old_apps_without_pattern_still_work() {
+        let o: Options = serde_json::from_str(r#"{"art":30,"radius":10,"floating":true}"#).unwrap();
+        assert_eq!(o.pattern, Pattern::Waves);
     }
 
     #[test]

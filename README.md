@@ -25,9 +25,10 @@
 - **Apple Music-style lyrics** — big bold lines over the blurred cover, the current line in white
 - **Harmonie wave** — three glowing sine waves ripple along the player while music plays, and settle on pause
 - **Frosted glass** — translucent panels, pill search bar, soft shadows on covers
+- **Background patterns** — waves, dots, lines or rings, softly showing through the glass (or none)
 - **Floating player** — the bottom player becomes a rounded glass card (or stays docked, your choice)
 - **5 accent colors** — rose, violet, blue, green, orange, in dark and light (10 schemes)
-- **Your own look** — tune the album art strength, corner roundness and player style with a live preview
+- **Your own look** — tune the album art strength, corners, player style and pattern with a live preview
 - **Survives Spotify updates** — the app repairs Spicetify's backup when Spotify updates
 - **One-click install and undo** — the app restores the theme you had before
 - **Tiny and fast** — the installer is a 3 MB native Rust app, no Electron
@@ -66,6 +67,8 @@ To change the look by hand, edit the **Options** block at the top of `user.css`:
 --harmonie-radius: 14px;        /* panel corners */
 --harmonie-player-gap: 10px;    /* 0 docks the player to the window edge */
 --harmonie-player-radius: 20px;
+--harmonie-pattern: var(--harmonie-pattern-waves); /* waves, dots, lines, rings or none */
+--harmonie-pattern-opacity: 0.1;  /* set to 0 with "none" */
 ```
 
 ## Screenshots

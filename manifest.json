@@ -8,6 +8,6 @@
     "schemes": "theme/color.ini",
     "include": ["https://raw.githubusercontent.com/Kehazy/harmonie/main/theme/theme.js"],
     "authors": [{ "name": "Kehazy", "url": "https://github.com/Kehazy" }],
-    "tags": ["dark", "light", "glass", "blur", "minimal"]
+    "tags": ["dark", "light", "glass", "blur", "minimal", "patterns"]
   }
 ]

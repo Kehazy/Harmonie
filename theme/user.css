@@ -9,8 +9,20 @@
   --harmonie-radius: 14px;        /* panel corners */
   --harmonie-player-gap: 10px;    /* 0 docks the player to the window edge */
   --harmonie-player-radius: 20px;
+  --harmonie-pattern: var(--harmonie-pattern-waves); /* waves, dots, lines, rings or none */
+  --harmonie-pattern-opacity: 0.1;
 }
 /* ---------- End of options ---------- */
+
+/* ---------- Patterns ----------
+   Tiles used as a mask, so the pattern takes the text color in dark and light. */
+:root {
+  --harmonie-pattern-none: none;
+  --harmonie-pattern-waves: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='28'%3E%3Cpath d='M0 14 C20 2 60 2 80 14 S140 26 160 14' fill='none' stroke='%23000' stroke-width='1.3'/%3E%3C/svg%3E");
+  --harmonie-pattern-dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='11' cy='11' r='1.4' fill='%23000'/%3E%3C/svg%3E");
+  --harmonie-pattern-lines: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cpath d='M-4 4 L4 -4 M0 14 L14 0 M10 18 L18 10' stroke='%23000' stroke-width='1'/%3E%3C/svg%3E");
+  --harmonie-pattern-rings: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Cg fill='none' stroke='%23000' stroke-width='1'%3E%3Ccircle cx='36' cy='36' r='9'/%3E%3Ccircle cx='36' cy='36' r='20'/%3E%3Ccircle cx='36' cy='36' r='31'/%3E%3C/g%3E%3C/svg%3E");
+}
 
 :root {
   --harmonie-font: -apple-system, "SF Pro Display", "SF Pro Text", "Segoe UI Variable Display",
@@ -70,6 +82,27 @@ h1.encore-text,
   opacity: var(--harmonie-art-opacity);
   transform: translateZ(0);
   transition: background-image 0.9s var(--harmonie-ease), opacity 0.6s var(--harmonie-ease);
+}
+
+/* Pattern layer: above the blurred art, below the glass panels. It fades out
+   toward the corners so it never looks like wallpaper. */
+.Root__top-container::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: rgb(var(--spice-rgb-text));
+  -webkit-mask-image: var(--harmonie-pattern), radial-gradient(ellipse at 50% 40%, #000 0%, rgba(0, 0, 0, 0.35) 70%, transparent 100%);
+  mask-image: var(--harmonie-pattern), radial-gradient(ellipse at 50% 40%, #000 0%, rgba(0, 0, 0, 0.35) 70%, transparent 100%);
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+  -webkit-mask-size: auto, 100% 100%;
+  mask-size: auto, 100% 100%;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  opacity: var(--harmonie-pattern-opacity);
+  transition: opacity 0.6s var(--harmonie-ease);
 }
 
 /* Translucent panels. Spotify rounds and clips the panels itself (8px), so the
