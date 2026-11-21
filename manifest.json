@@ -6,7 +6,7 @@
     "readme": "README.md",
     "usercss": "theme/user.css",
     "schemes": "theme/color.ini",
-    "include": ["https://raw.githubusercontent.com/Kehazy/harmonie/main/theme/theme.js"],
+    "include": ["https://cdn.jsdelivr.net/gh/Kehazy/Harmonie@main/theme/theme.js"],
     "authors": [{ "name": "Kehazy", "url": "https://github.com/Kehazy" }],
     "tags": ["dark", "light", "glass", "blur", "minimal", "patterns"]
   }
