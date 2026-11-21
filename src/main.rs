@@ -213,6 +213,9 @@ struct Status {
     start_page: Option<String>,
     /// Spotify from the Microsoft Store, which Spicetify does not fully support.
     store_spotify: bool,
+    /// The Spicetify Marketplace is installed. It only installs themes while
+    /// `current_theme` is "marketplace".
+    marketplace: bool,
 }
 
 /// Path to spicetify.exe (default install location, otherwise PATH).
@@ -409,6 +412,7 @@ async fn status() -> Status {
         extensions: Vec::new(),
         start_page: env::var("HARMONIE_PAGE").ok(),
         store_spotify: false,
+        marketplace: false,
     };
     if let Ok(dir) = config_dir() {
         let css = dir.join("Themes").join(THEME).join("user.css");
@@ -424,6 +428,7 @@ async fn status() -> Status {
             s.accent = accent;
         }
         s.store_spotify = read_setting(&dir, "spotify_path").contains("WindowsApps");
+        s.marketplace = has_marketplace(&read_setting(&dir, "custom_apps"));
         let enabled = enabled_extensions(&read_setting(&dir, "extensions"));
         s.extensions = EXTENSIONS
             .iter()
@@ -488,33 +493,58 @@ async fn install(scheme: String, accent: String, options: Option<Options>) -> Re
     apply().map_err(|e| friendly(&e))
 }
 
+/// Spicetify's `custom_apps` setting is a `|`-separated list.
+fn has_marketplace(custom_apps: &str) -> bool {
+    custom_apps.split('|').any(|a| a.trim() == "marketplace")
+}
+
+/// Which theme to go back to when Harmonie is removed. The Marketplace only
+/// installs themes while the theme is "marketplace", so with the Marketplace
+/// installed that is the fallback; without it, Spotify's own look ("").
+fn restore_target(prev_theme: &str, prev_scheme: &str, prev_exists: bool, marketplace: bool) -> (String, String) {
+    let prev_ok = !prev_theme.is_empty()
+        && prev_theme != THEME
+        && (prev_exists || (prev_theme == "marketplace" && marketplace));
+    if prev_ok {
+        (prev_theme.to_string(), prev_scheme.to_string())
+    } else if marketplace {
+        ("marketplace".into(), String::new())
+    } else {
+        (String::new(), String::new())
+    }
+}
+
+/// Removes Harmonie and sets Spotify to `theme`, then cleans up Harmonie's files.
+fn switch_away(theme: &str, scheme: &str) -> Result<String, String> {
+    let dir = config_dir()?;
+    spicetify(&["config", "current_theme", theme, "color_scheme", scheme]).map_err(|e| friendly(&e))?;
+    let log = apply().map_err(|e| friendly(&e))?;
+    let _ = fs::remove_dir_all(dir.join("Themes").join(THEME));
+    let _ = fs::remove_file(dir.join(PREVIOUS_FILE));
+    Ok(log)
+}
+
 #[tauri::command]
 async fn uninstall() -> Result<String, String> {
     let dir = config_dir()?;
     let saved = fs::read_to_string(dir.join(PREVIOUS_FILE)).unwrap_or_default();
     let mut lines = saved.lines();
-    let mut prev_theme = lines.next().unwrap_or("").trim().to_string();
-    let mut prev_scheme = lines.next().unwrap_or("").trim().to_string();
+    let prev_theme = lines.next().unwrap_or("").trim().to_string();
+    let prev_scheme = lines.next().unwrap_or("").trim().to_string();
+    let prev_exists = !prev_theme.is_empty() && dir.join("Themes").join(&prev_theme).is_dir();
+    let marketplace = has_marketplace(&read_setting(&dir, "custom_apps"));
+    let (theme, scheme) = restore_target(&prev_theme, &prev_scheme, prev_exists, marketplace);
+    switch_away(&theme, &scheme)
+}
 
-    // Fall back to Spotify's own look if the previous theme is gone.
-    if prev_theme == THEME || !dir.join("Themes").join(&prev_theme).is_dir() {
-        prev_theme.clear();
-        prev_scheme.clear();
+/// Hands themes back to the Spicetify Marketplace, so it can install them again.
+#[tauri::command]
+async fn use_marketplace() -> Result<String, String> {
+    let dir = config_dir()?;
+    if !has_marketplace(&read_setting(&dir, "custom_apps")) {
+        return Err("The Spicetify Marketplace is not installed.".into());
     }
-
-    spicetify(&[
-        "config",
-        "current_theme",
-        &prev_theme,
-        "color_scheme",
-        &prev_scheme,
-    ])
-    .map_err(|e| friendly(&e))?;
-    let log = apply().map_err(|e| friendly(&e))?;
-
-    let _ = fs::remove_dir_all(dir.join("Themes").join(THEME));
-    let _ = fs::remove_file(dir.join(PREVIOUS_FILE));
-    Ok(log)
+    switch_away("marketplace", "")
 }
 
 /// Creates a desktop shortcut that starts Spotify through `spicetify auto`.
@@ -758,6 +788,7 @@ fn main() {
             add_extension,
             remove_extension,
             repair,
+            use_marketplace,
             open_fix_terminal,
             open_spotify,
             open_link
@@ -895,6 +926,29 @@ mod tests {
     fn friendly_network_error() {
         let msg = friendly("Spicetify could not be installed.\nUnable to connect to the remote server");
         assert!(msg.starts_with("No internet connection."), "{msg}");
+    }
+
+    #[test]
+    fn removing_harmonie_keeps_the_marketplace_working() {
+        // Previous theme still there: go back to it.
+        assert_eq!(restore_target("Sleek", "nord", true, true), ("Sleek".into(), "nord".into()));
+        // The Marketplace's own theme slot, even if its folder is missing.
+        assert_eq!(restore_target("marketplace", "", false, true), ("marketplace".into(), "".into()));
+        // Previous theme lost: Marketplace installed means "marketplace".
+        assert_eq!(restore_target("", "", false, true), ("marketplace".into(), "".into()));
+        assert_eq!(restore_target("Gone", "x", false, true), ("marketplace".into(), "".into()));
+        assert_eq!(restore_target("Harmonie", "dark", true, true), ("marketplace".into(), "".into()));
+        // No Marketplace: Spotify's own look.
+        assert_eq!(restore_target("", "", false, false), ("".into(), "".into()));
+        assert_eq!(restore_target("marketplace", "", false, false), ("".into(), "".into()));
+    }
+
+    #[test]
+    fn detects_the_marketplace() {
+        assert!(has_marketplace("marketplace"));
+        assert!(has_marketplace("lyrics-plus|marketplace"));
+        assert!(!has_marketplace("lyrics-plus"));
+        assert!(!has_marketplace(""));
     }
 
     #[test]

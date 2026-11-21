@@ -660,6 +660,7 @@
         <div class="banner info" id="updateBanner" hidden><span class="ic"><svg class="i"><use href="#gift"/></svg></span><p><b id="updateText">A new version is available.</b> Download it from GitHub.</p><button class="ghost" data-link="https://github.com/Kehazy/harmonie/releases/latest">Download</button></div>
         <div class="banner warn" id="spicetifyBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Spicetify is not installed.</b> Harmonie installs it for you when you install the theme, or right now.</p><button class="ghost" id="installSpicetify">Install Spicetify</button></div>
         <div class="banner info" id="spicetifyUpdateBanner" hidden><span class="ic"><svg class="i"><use href="#gift"/></svg></span><p><b id="spicetifyUpdateText">A Spicetify update is available.</b> Harmonie updates it when you install the theme, or right now.</p><button class="ghost" id="updateSpicetify">Update Spicetify</button></div>
+        <div class="banner info" id="marketBanner" hidden><span class="ic"><svg class="i"><use href="#puzzle"/></svg></span><p><b>Marketplace themes are paused.</b> While Harmonie is on from this app, the Spicetify Marketplace cannot install themes. Extensions still work.</p><button class="ghost" id="useMarketplace">Use Marketplace themes</button><button class="dismiss" id="hideMarket" title="Hide" aria-label="Hide this message"><svg class="i"><use href="#x"/></svg></button></div>
         <div class="banner warn" id="storeBanner" hidden><span class="ic"><svg class="i"><use href="#alert"/></svg></span><p><b>Microsoft Store version of Spotify.</b> Its own Start menu tile opens Spotify without the theme. Use a shortcut that starts it through Spicetify, or install Spotify from spotify.com.</p><button class="ghost" id="shortcut">Create shortcut</button><button class="dismiss" id="hideStore" title="Hide" aria-label="Hide this message"><svg class="i"><use href="#x"/></svg></button></div>
       </div>
 
@@ -819,13 +820,14 @@
     : async (cmd, args) => {
         if (cmd === "status") {
           await new Promise((r) => setTimeout(r, 700));
-          return { version: "3.0.0", spicetify: "2.46.7", installed: true, active: true, scheme: "dark", accent: "rose", current_theme: "Harmonie", store_spotify: true, options: { art: 42, radius: 14, floating: true, pattern: "waves", adaptive: false }, extensions: demoExtensions.slice() };
+          return { version: "3.0.0", spicetify: "2.46.7", installed: true, active: true, scheme: "dark", accent: "rose", current_theme: "Harmonie", store_spotify: true, marketplace: true, options: { art: 42, radius: 14, floating: true, pattern: "waves", adaptive: false }, extensions: demoExtensions.slice() };
         }
         if (cmd === "open_link") return void window.open(args.url, "_blank");
         if (cmd === "create_shortcut") return "Shortcut created on your desktop.";
         if (cmd === "open_spotify") return;
         if (cmd === "install_spicetify") { await new Promise((r) => setTimeout(r, 1500)); return "2.46.7"; }
         if (cmd === "repair" || cmd === "open_fix_terminal") return "";
+        if (cmd === "use_marketplace") { await new Promise((r) => setTimeout(r, 1200)); return ""; }
         if (cmd === "add_extension") { await new Promise((r) => setTimeout(r, 1200)); demoExtensions.push(args.id); return ""; }
         if (cmd === "remove_extension") { await new Promise((r) => setTimeout(r, 1200)); demoExtensions = demoExtensions.filter((x) => x !== args.id); return ""; }
         await new Promise((r) => setTimeout(r, 1600));
@@ -1134,6 +1136,8 @@
     $("#spicetifyUpdateBanner").hidden = !outdated;
     if (outdated) $("#spicetifyUpdateText").textContent = `Spicetify ${spicetifyLatest} is available (you have ${s.spicetify}).`;
     $("#storeBanner").hidden = !s.spicetify || !s.store_spotify || pref("harmonie-hide-store") === "1";
+    $("#marketBanner").hidden = !(s.active && s.marketplace) || pref("harmonie-hide-market") === "1";
+    $("#useMarketplace").disabled = state.busy;
     $("#openSpotify").disabled = state.busy || !s.spicetify;
   }
 
@@ -1358,6 +1362,27 @@
         active ? `${name} removed.` : `${name} added.`, active ? null : { label: "Open Spotify", run: openSpotify });
     };
   });
+
+  $("#hideMarket").onclick = () => {
+    pref("harmonie-hide-market", "1");
+    $("#marketBanner").hidden = true;
+  };
+  $("#useMarketplace").onclick = () => {
+    const b = $("#useMarketplace");
+    if (state.busy) return;
+    const original = b.textContent;
+    state.busy = true;
+    render();
+    b.textContent = "Switching…";
+    invoke("use_marketplace")
+      .then(() => notify("Done. The Marketplace can install themes again.", false, { label: "Open Spotify", run: openSpotify }))
+      .catch((e) => notify(errorLines(e), true))
+      .finally(async () => {
+        b.textContent = original;
+        state.busy = false;
+        await refresh();
+      });
+  };
 
   $("#hideStore").onclick = () => {
     pref("harmonie-hide-store", "1");

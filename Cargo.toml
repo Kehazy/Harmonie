@@ -1,6 +1,6 @@
 [package]
 name = "harmonie"
-version = "3.5.2"
+version = "3.5.3"
 description = "Installs the Harmonie theme (Apple Music-inspired) on Spotify through Spicetify"
 license = "MIT"
 repository = "https://github.com/Kehazy/harmonie"
