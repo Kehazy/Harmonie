@@ -31,7 +31,7 @@
 - **Song colors** — optional: the accent takes the color of each song's cover, like Apple Music
 - **Your own look** — tune the album art strength, corners, player style and pattern with a live preview
 - **Presets** — Harmonie, Midnight, Sunset, Studio, Daylight and Vivid in one click
-- **Extensions** — add Volume Percentage (ohitstom) and Section Marker (Aimarekin) in one click; each is downloaded from its author's repository and keeps its own license
+- **Extensions** — turn on all 10 of Spicetify's own extensions (Full App Display, Shuffle+, Loopy Loop, Popup Lyrics, Trashbin…) plus Volume Percentage (ohitstom) and Section Marker (Aimarekin) in one click, with search; community ones are downloaded from their author's repository and keep their own license
 - **Small touches** — accent edge on hovered tracks, accent keyboard focus, pages that fade in, rounded tooltips
 - **Survives Spotify updates** — the app repairs Spicetify's backup when Spotify updates
 - **Handles Spicetify for you** — installs it if missing, updates it if outdated, repairs it if applying fails, and opens a terminal with the fix as a last resort

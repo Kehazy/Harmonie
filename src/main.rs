@@ -23,24 +23,39 @@ const PREVIOUS_FILE: &str = ".harmonie-previous";
 /// Accent ids. "rose" is the plain `dark` / `light` scheme; the others are `dark-<id>` / `light-<id>`.
 const ACCENTS: &[&str] = &["rose", "violet", "blue", "green", "orange"];
 
-/// Extensions Harmonie can add. The code is downloaded from each author's own
-/// repository when the person adds it; Harmonie does not ship it.
+/// Extensions Harmonie can turn on. Built-in ones ship with Spicetify itself
+/// (`url: None`). Community ones are downloaded from their author's repository
+/// when the person adds them; Harmonie does not ship their code.
 struct Extension {
     id: &'static str,
     file: &'static str,
-    url: &'static str,
+    url: Option<&'static str>,
+}
+
+const fn builtin(id: &'static str, file: &'static str) -> Extension {
+    Extension { id, file, url: None }
 }
 
 const EXTENSIONS: &[Extension] = &[
+    builtin("full-app-display", "fullAppDisplay.js"),
+    builtin("shuffle-plus", "shuffle+.js"),
+    builtin("keyboard-shortcut", "keyboardShortcut.js"),
+    builtin("loopy-loop", "loopyLoop.js"),
+    builtin("popup-lyrics", "popupLyrics.js"),
+    builtin("trashbin", "trashbin.js"),
+    builtin("bookmark", "bookmark.js"),
+    builtin("auto-skip-video", "autoSkipVideo.js"),
+    builtin("auto-skip-explicit", "autoSkipExplicit.js"),
+    builtin("webnowplaying", "webnowplaying.js"),
     Extension {
         id: "volume-percentage",
         file: "volumePercentage.js",
-        url: "https://raw.githubusercontent.com/ohitstom/spicetify-extensions/main/volumePercentage/volumePercentage.js",
+        url: Some("https://raw.githubusercontent.com/ohitstom/spicetify-extensions/main/volumePercentage/volumePercentage.js"),
     },
     Extension {
         id: "section-marker",
         file: "section-marker.js",
-        url: "https://raw.githubusercontent.com/Aimarekin/Aimarekins-Spicetify-Extensions/main/_dist/section-marker.js",
+        url: Some("https://raw.githubusercontent.com/Aimarekin/Aimarekins-Spicetify-Extensions/main/_dist/section-marker.js"),
     },
 ];
 
@@ -557,6 +572,11 @@ fn enabled_extensions(setting: &str) -> Vec<String> {
 #[tauri::command]
 async fn add_extension(id: String) -> Result<String, String> {
     let ext = EXTENSIONS.iter().find(|e| e.id == id).ok_or("Unknown extension.")?;
+    let Some(url) = ext.url else {
+        // Built into Spicetify: nothing to download.
+        spicetify(&["config", "extensions", ext.file]).map_err(|e| friendly(&e))?;
+        return apply().map_err(|e| friendly(&e));
+    };
     let dir = config_dir()?.join("Extensions");
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let target = dir.join(ext.file);
@@ -566,7 +586,7 @@ async fn add_extension(id: String) -> Result<String, String> {
         Invoke-WebRequest -Uri $env:HARMONIE_URL -OutFile $env:HARMONIE_OUT -UseBasicParsing -Headers @{ 'User-Agent' = 'Harmonie' }";
     let out = command("powershell")
         .args(["-NoProfile", "-NonInteractive", "-EncodedCommand", &encode_powershell(script)])
-        .env("HARMONIE_URL", ext.url)
+        .env("HARMONIE_URL", url)
         .env("HARMONIE_OUT", &target)
         .output()
         .map_err(|e| format!("Could not start PowerShell: {e}"))?;
@@ -585,7 +605,10 @@ async fn remove_extension(id: String) -> Result<String, String> {
     let dir = config_dir()?;
     spicetify(&["config", "extensions", &format!("{}-", ext.file)]).map_err(|e| friendly(&e))?;
     let log = apply().map_err(|e| friendly(&e))?;
-    let _ = fs::remove_file(dir.join("Extensions").join(ext.file));
+    // Only delete what Harmonie downloaded; built-in files belong to Spicetify.
+    if ext.url.is_some() {
+        let _ = fs::remove_file(dir.join("Extensions").join(ext.file));
+    }
     Ok(log)
 }
 
@@ -846,9 +869,16 @@ mod tests {
     #[test]
     fn extensions_come_from_their_authors_and_are_linkable() {
         for e in EXTENSIONS {
-            assert!(e.url.starts_with("https://raw.githubusercontent.com/"), "{}", e.id);
-            assert!(e.url.ends_with(e.file), "{}", e.id);
+            if let Some(url) = e.url {
+                assert!(url.starts_with("https://raw.githubusercontent.com/"), "{}", e.id);
+                assert!(url.ends_with(e.file), "{}", e.id);
+            }
         }
+        let mut ids: Vec<_> = EXTENSIONS.iter().map(|e| e.id).collect();
+        ids.sort_unstable();
+        ids.dedup();
+        assert_eq!(ids.len(), EXTENSIONS.len(), "extension ids are unique");
+        assert_eq!(EXTENSIONS.iter().filter(|e| e.url.is_none()).count(), 10);
         assert!(LINKS.iter().any(|l| l.contains("ohitstom")));
         assert!(LINKS.iter().any(|l| l.contains("Aimarekin")));
     }
