@@ -438,6 +438,30 @@
   .note { margin-top: 18px; padding: 14px 16px; border-radius: 14px; font-size: 13px; line-height: 1.55; color: var(--sub); background: var(--hover); border: 1px solid var(--line); }
   .links { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
 
+  /* ---------- Dialog ---------- */
+  .dialog-backdrop {
+    position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 24px;
+    background: rgba(8, 8, 10, 0.55); backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .dialog-backdrop.show { opacity: 1; pointer-events: auto; }
+  .dialog {
+    width: min(460px, 100%); padding: 24px; border-radius: 22px;
+    background: var(--glass); backdrop-filter: blur(32px) saturate(1.4);
+    border: 1px solid var(--line); box-shadow: var(--edge), 0 30px 80px -20px rgba(0,0,0,.7);
+    transform: translateY(10px) scale(.97); transition: transform .45s var(--spring);
+  }
+  .dialog-backdrop.show .dialog { transform: none; }
+  .dialog .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+  .dialog .ic svg { width: 20px; height: 20px; }
+  .dialog h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin-top: 16px; }
+  .dialog p { color: var(--sub); font-size: 13.5px; line-height: 1.6; margin-top: 8px; }
+  .dialog label { display: flex; align-items: center; gap: 9px; margin-top: 16px; font-size: 13px; color: var(--sub); cursor: pointer; }
+  .dialog input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+  .dialog-actions .primary { height: 40px; padding: 0 18px; font-size: 13.5px; }
+  .dialog-actions .ghost { height: 40px; }
+
   /* ---------- Island notification ---------- */
   .island {
     position: fixed; left: 50%; top: 22px; z-index: 10; display: flex; align-items: center; gap: 10px;
@@ -810,17 +834,32 @@
   </main>
 </div>
 
+<div class="dialog-backdrop" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+  <div class="dialog">
+    <span class="ic"><svg class="i"><use href="#alert"/></svg></span>
+    <h3 id="dialogTitle">Marketplace themes will pause</h3>
+    <p>Installing Harmonie from this app makes it Spotify's active theme. While it is on, the Spicetify Marketplace cannot install themes (extensions keep working). You can switch back any time with <b>Use Marketplace themes</b> or <b>Remove theme</b>.</p>
+    <p>Prefer the Marketplace? Install Harmonie from Marketplace → Themes instead.</p>
+    <label><input type="checkbox" id="dialogRemember"> Don't ask me again</label>
+    <div class="dialog-actions">
+      <button class="ghost" id="dialogCancel">Cancel</button>
+      <button class="primary" id="dialogOk"><span>Install anyway</span></button>
+    </div>
+  </div>
+</div>
+
 <div class="island" id="island" role="status" aria-live="polite"><span class="ic"><svg class="i" id="islandIcon"><use href="#check"/></svg></span><span id="islandText"></span><button class="island-action" id="islandAction" hidden></button></div>
 
 <script>
   // Outside the app (browser preview): demo data.
   let demoExtensions = [];
+  let demoActive = !location.search.includes("market");
   const invoke = window.__TAURI__
     ? window.__TAURI__.core.invoke
     : async (cmd, args) => {
         if (cmd === "status") {
           await new Promise((r) => setTimeout(r, 700));
-          return { version: "3.0.0", spicetify: "2.46.7", installed: true, active: true, scheme: "dark", accent: "rose", current_theme: "Harmonie", store_spotify: true, marketplace: true, options: { art: 42, radius: 14, floating: true, pattern: "waves", adaptive: false }, extensions: demoExtensions.slice() };
+          return { version: "3.0.0", spicetify: "2.46.7", installed: demoActive, active: demoActive, scheme: "dark", accent: "rose", current_theme: demoActive ? "Harmonie" : "marketplace", store_spotify: true, marketplace: true, options: { art: 42, radius: 14, floating: true, pattern: "waves", adaptive: false }, extensions: demoExtensions.slice() };
         }
         if (cmd === "open_link") return void window.open(args.url, "_blank");
         if (cmd === "create_shortcut") return "Shortcut created on your desktop.";
@@ -1214,8 +1253,36 @@
 
   // One click does everything: install or update Spicetify, apply Harmonie,
   // repair Spicetify and retry if that fails, and offer a terminal as a last resort.
+  // Resolves true if the person confirms, false if they cancel.
+  function confirmMarketplacePause() {
+    const dlg = $("#dialog");
+    return new Promise((resolve) => {
+      const done = (ok) => {
+        if (ok && $("#dialogRemember").checked) pref("harmonie-skip-market-warning", "1");
+        dlg.classList.remove("show");
+        removeEventListener("keydown", onKey, true);
+        resolve(ok);
+      };
+      const onKey = (e) => {
+        if (e.key === "Escape") { e.stopPropagation(); done(false); }
+      };
+      $("#dialogOk").onclick = () => done(true);
+      $("#dialogCancel").onclick = () => done(false);
+      dlg.onclick = (e) => { if (e.target === dlg) done(false); };
+      addEventListener("keydown", onKey, true);
+      $("#dialogRemember").checked = false;
+      dlg.classList.add("show");
+      $("#dialogOk").focus();
+    });
+  }
+
   async function setupAndInstall(button) {
-    if (state.busy) return;
+    if (state.busy || $("#dialog").classList.contains("show")) return;
+    const s = state.status;
+    // Installing over Marketplace mode would block Marketplace themes: ask first.
+    if (s && s.marketplace && !s.active && s.current_theme === "marketplace" && pref("harmonie-skip-market-warning") !== "1") {
+      if (!(await confirmMarketplacePause())) return;
+    }
     const label = button.querySelector("span");
     const original = label.textContent;
     const setLabel = (text) => (label.textContent = text);
