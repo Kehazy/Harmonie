@@ -11,6 +11,7 @@
   --harmonie-player-radius: 20px;
   --harmonie-pattern: var(--harmonie-pattern-waves); /* waves, dots, lines, rings or none */
   --harmonie-pattern-opacity: 0.1;
+  --harmonie-adaptive: 0; /* 1: accent follows the song's cover */
 }
 /* ---------- End of options ---------- */
 
@@ -451,6 +452,20 @@ h1.encore-text,
 
 @keyframes harmonie-flow {
   to { transform: translateX(-50%); }
+}
+
+/* The progress bar glows softly while music plays. */
+.harmonie-playing [data-testid="playback-progressbar"] .progress-bar {
+  filter: drop-shadow(0 0 6px rgba(var(--spice-rgb-button), 0.55));
+}
+
+/* Cover in the player lifts a little on hover. */
+.main-nowPlayingWidget-coverArt {
+  transition: transform 0.35s var(--harmonie-ease);
+}
+
+.main-nowPlayingWidget-coverArt:hover {
+  transform: scale(1.06);
 }
 
 /* Cover art in the player breathes gently while music plays. */

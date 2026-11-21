@@ -389,6 +389,25 @@
   .reset { font-size: 13px; color: var(--sub); }
   .reset:hover { color: var(--text); }
 
+  /* ---------- Extensions ---------- */
+  .exts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 26px; }
+  .ext { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .ext-head { display: flex; gap: 14px; align-items: center; }
+  .ext-head .ic { width: 44px; height: 44px; flex: none; border-radius: 13px; display: grid; place-items: center; color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, transparent); }
+  .ext-head .ic svg { width: 22px; height: 22px; }
+  .ext-head b { display: block; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .ext-head small { display: block; font-size: 12.5px; color: var(--faint); margin-top: 2px; }
+  .ext p { color: var(--sub); font-size: 13.5px; line-height: 1.55; }
+  .ext-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .chip { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 99px; font-size: 11.5px; color: var(--sub); background: var(--hover); border: 1px solid var(--line); }
+  .chip.on { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); border-color: transparent; }
+  .ext-actions { display: flex; gap: 8px; align-items: center; margin-top: auto; }
+  .ext-actions .primary { height: 38px; padding: 0 16px; font-size: 13px; }
+  .ext-actions .ghost.danger-text { color: var(--danger); }
+  .linkbtn { font-size: 13px; color: var(--sub); }
+  .linkbtn:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+  .ext-note { margin-top: 18px; }
+
   /* ---------- About ---------- */
   .about { display: grid; grid-template-columns: 1fr 1.4fr; gap: 40px; margin-top: 28px; }
   .spec { display: flex; flex-direction: column; }
@@ -425,7 +444,23 @@
   .island-action[hidden] { display: none; }
 
   /* ---------- Presets ---------- */
-  .presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .preset[data-preset="vivid"] i { background: conic-gradient(from 200deg at 50% 60%, #e5445c, #e08a2e, #2fa36b, #3b82d6, #8e6be8, #e5445c) !important; }
+  .preset[data-preset="vivid"] i::before { opacity: 0; }
+
+  /* Song colors toggle and swatches while it is on */
+  .swatches.muted { opacity: .4; pointer-events: none; filter: saturate(.6); transition: opacity .3s; }
+  .rainbow-dot { width: 10px; height: 10px; border-radius: 50%; background: conic-gradient(#e5445c, #e08a2e, #2fa36b, #3b82d6, #8e6be8, #e5445c); }
+
+  /* What's new */
+  .whatsnew { margin-top: 22px; padding: 18px 20px; display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: start; }
+  .whatsnew[hidden] { display: none; }
+  .whatsnew .ic { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; color: #fff; background: linear-gradient(150deg, var(--accent-2), var(--accent)); box-shadow: 0 8px 18px -8px var(--accent); }
+  .whatsnew .ic svg { width: 19px; height: 19px; }
+  .whatsnew b { font-size: 14.5px; font-weight: 600; }
+  .whatsnew ul { list-style: none; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .whatsnew li { font-size: 13px; color: var(--sub); line-height: 1.5; padding-left: 14px; position: relative; }
+  .whatsnew li::before { content: ""; position: absolute; left: 0; top: .6em; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
   .preset {
     display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 14px; text-align: left;
     border: 1px solid transparent; font-size: 12px; color: var(--sub); transition: background .25s, color .25s, border-color .25s, transform .3s var(--spring);
@@ -452,6 +487,7 @@
   .nav-item .badge:not([hidden]) + .kbd { margin-left: 8px; }
 
   @media (max-width: 900px) {
+    .exts { grid-template-columns: 1fr; }
     .sidebar { width: 72px; }
     .sidebar .brand { justify-content: center; padding-inline: 0; }
     .sidebar :is(.brand-text, .label, .switch, .nav-label, .kbd, .now, .collapse) { display: none; }
@@ -493,6 +529,9 @@
     <symbol id="sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
     <symbol id="shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
     <symbol id="play-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/></symbol>
+    <symbol id="puzzle" viewBox="0 0 24 24"><path d="M10 3a2 2 0 0 1 4 0v2h4a1 1 0 0 1 1 1v4h-2a2 2 0 0 0 0 4h2v4a1 1 0 0 1-1 1h-4v-2a2 2 0 0 0-4 0v2H6a1 1 0 0 1-1-1v-4h2a2 2 0 0 0 0-4H5V6a1 1 0 0 1 1-1h4z"/></symbol>
+    <symbol id="volume" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+    <symbol id="markers" viewBox="0 0 24 24"><path d="M3 12h18"/><path d="M7 8v8M11 6v12M15 9v6M18 7v10"/></symbol>
     <symbol id="alert" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17v.01"/></symbol>
     <symbol id="gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M12 8v13M3 12h18M12 8S10 3 7.5 4.5 9 8 12 8zM12 8s2-5 4.5-3.5S15 8 12 8z"/></symbol>
     <symbol id="star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol>
@@ -543,7 +582,8 @@
     <nav>
       <button class="nav-item on" data-page="home" title="Home"><svg class="i"><use href="#home"/></svg><span class="label">Home</span><span class="kbd">1</span></button>
       <button class="nav-item" data-page="look" title="Appearance"><svg class="i"><use href="#palette"/></svg><span class="label">Appearance</span><span class="badge" id="navPending" hidden title="Changes not applied yet"></span><span class="kbd">2</span></button>
-      <button class="nav-item" data-page="about" title="About"><svg class="i"><use href="#info"/></svg><span class="label">About</span><span class="kbd">3</span></button>
+      <button class="nav-item" data-page="extensions" title="Extensions"><svg class="i"><use href="#puzzle"/></svg><span class="label">Extensions</span><span class="kbd">3</span></button>
+      <button class="nav-item" data-page="about" title="About"><svg class="i"><use href="#info"/></svg><span class="label">About</span><span class="kbd">4</span></button>
     </nav>
     <div class="now" title="Current style">
       <div class="now-art"></div>
@@ -574,6 +614,19 @@
           <span class="pill"><span class="dot" id="spDot"></span>Spicetify <b class="mono" id="sp"><span class="skel"></span></b></span>
           <span class="pill"><span class="dot" id="thDot"></span>Theme <b id="th"><span class="skel" style="width:44px"></span></b></span>
         </div>
+      </div>
+
+      <div class="tile whatsnew rise" style="--i:3" id="whatsNew" hidden>
+        <span class="ic"><svg class="i"><use href="#gift"/></svg></span>
+        <div>
+          <b id="whatsNewTitle">What's new</b>
+          <ul>
+            <li><b style="font-size:13px">Song colors</b>: Spotify's accent follows each song's cover, like Apple Music. Turn it on in Appearance.</li>
+            <li><b style="font-size:13px">Extensions</b>: add Volume Percentage and Section Marker in one click.</li>
+            <li><b style="font-size:13px">Spicetify handled for you</b>: installed, updated and repaired automatically.</li>
+          </ul>
+        </div>
+        <button class="dismiss" id="hideWhatsNew" title="Got it" aria-label="Hide what's new"><svg class="i"><use href="#x"/></svg></button>
       </div>
 
       <div class="banners">
@@ -639,6 +692,10 @@
             <h2>Accent color</h2>
             <div class="swatches" id="swatches" role="radiogroup" aria-label="Accent color"></div>
           </div>
+          <button class="toggle-row rise" style="--i:4" id="adaptive" role="switch" aria-checked="false">
+            <span><b>Song colors</b><small>The accent takes the color of each song's cover</small></span>
+            <span class="switch" id="adaptiveSwitch"></span>
+          </button>
           <div class="opt rise" style="--i:5">
             <div class="opt-row"><span>Album art background</span><output id="artOut">42%</output></div>
             <input type="range" id="art" min="0" max="80" step="2" value="42" aria-label="Album art background">
@@ -666,6 +723,36 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- Extensions -->
+    <section class="page" id="page-extensions">
+      <p class="eyebrow rise">Add-ons</p>
+      <h1 class="rise" style="--i:1">Extensions</h1>
+      <p class="lead rise" style="--i:2">Small add-ons for Spotify, made by the Spicetify community. Harmonie downloads each one from its author's repository when you add it.</p>
+
+      <div class="exts">
+        <div class="tile ext rise" style="--i:3" data-ext="volume-percentage">
+          <div class="ext-head"><span class="ic"><svg class="i"><use href="#volume"/></svg></span><div><b>Volume Percentage</b><small>by ohitstom</small></div></div>
+          <p>Shows the exact volume in percent when you hover the volume bar, and lets you type a precise value.</p>
+          <div class="ext-meta"><span class="chip" data-state>Off</span><span class="chip">GPL-3.0</span></div>
+          <div class="ext-actions">
+            <button class="primary" data-toggle><span>Add</span></button>
+            <button class="linkbtn" data-link="https://github.com/ohitstom/spicetify-extensions">Source</button>
+          </div>
+        </div>
+        <div class="tile ext rise" style="--i:4" data-ext="section-marker">
+          <div class="ext-head"><span class="ic"><svg class="i"><use href="#markers"/></svg></span><div><b>Section Marker</b><small>by Aimarekin</small></div></div>
+          <p>Marks a song's sections (intro, chorus, bridge) right on the progress bar, so you can jump to them.</p>
+          <div class="ext-meta"><span class="chip" data-state>Off</span><span class="chip">CC BY-NC 4.0 · non-commercial</span></div>
+          <div class="ext-actions">
+            <button class="primary" data-toggle><span>Add</span></button>
+            <button class="linkbtn" data-link="https://github.com/Aimarekin/Aimarekins-Spicetify-Extensions">Source</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="note ext-note rise" style="--i:5">Already added one from the Spicetify Marketplace? Then skip it here, or it will load twice. Each extension belongs to its author and keeps its own license.</p>
     </section>
 
     <!-- About -->
@@ -703,18 +790,21 @@
 
 <script>
   // Outside the app (browser preview): demo data.
+  let demoExtensions = [];
   const invoke = window.__TAURI__
     ? window.__TAURI__.core.invoke
     : async (cmd, args) => {
         if (cmd === "status") {
           await new Promise((r) => setTimeout(r, 700));
-          return { version: "3.0.0", spicetify: "2.46.7", installed: true, active: true, scheme: "dark", accent: "rose", current_theme: "Harmonie", store_spotify: true, options: { art: 42, radius: 14, floating: true, pattern: "waves" } };
+          return { version: "3.0.0", spicetify: "2.46.7", installed: true, active: true, scheme: "dark", accent: "rose", current_theme: "Harmonie", store_spotify: true, options: { art: 42, radius: 14, floating: true, pattern: "waves", adaptive: false }, extensions: demoExtensions.slice() };
         }
         if (cmd === "open_link") return void window.open(args.url, "_blank");
         if (cmd === "create_shortcut") return "Shortcut created on your desktop.";
         if (cmd === "open_spotify") return;
         if (cmd === "install_spicetify") { await new Promise((r) => setTimeout(r, 1500)); return "2.46.7"; }
         if (cmd === "repair" || cmd === "open_fix_terminal") return "";
+        if (cmd === "add_extension") { await new Promise((r) => setTimeout(r, 1200)); demoExtensions.push(args.id); return ""; }
+        if (cmd === "remove_extension") { await new Promise((r) => setTimeout(r, 1200)); demoExtensions = demoExtensions.filter((x) => x !== args.id); return ""; }
         await new Promise((r) => setTimeout(r, 1600));
         return "";
       };
@@ -728,15 +818,17 @@
     green:  { name: "Green",  c: "#2fa36b", h: "#48b97f" },
     orange: { name: "Orange", c: "#e08a2e", h: "#e9a050" },
   };
-  const DEFAULTS = { art: 42, radius: 14, floating: true, pattern: "waves" };
+  const DEFAULTS = { art: 42, radius: 14, floating: true, pattern: "waves", adaptive: false };
 
   const PRESETS = {
     harmonie: { name: "Harmonie", scheme: "dark", accent: "rose", options: { ...DEFAULTS } },
     midnight: { name: "Midnight", scheme: "dark", accent: "violet", options: { art: 58, radius: 18, floating: true, pattern: "rings" } },
     sunset:   { name: "Sunset", scheme: "dark", accent: "orange", options: { art: 68, radius: 20, floating: true, pattern: "waves" } },
     studio:   { name: "Studio", scheme: "dark", accent: "green", options: { art: 18, radius: 6, floating: false, pattern: "lines" } },
-    daylight: { name: "Daylight", scheme: "light", accent: "blue", options: { art: 36, radius: 14, floating: true, pattern: "dots" } },
+    daylight: { name: "Daylight", scheme: "light", accent: "blue", options: { art: 36, radius: 14, floating: true, pattern: "dots", adaptive: false } },
+    vivid:    { name: "Vivid", scheme: "dark", accent: "rose", options: { art: 60, radius: 16, floating: true, pattern: "waves", adaptive: true } },
   };
+  for (const p of Object.values(PRESETS)) p.options = { ...DEFAULTS, ...p.options };
   let applied = null; // what Spotify has right now, from the status
 
   // Same tiles as the Spotify theme. `size` shrinks them for the small previews.
@@ -790,7 +882,7 @@
   }
 
   /* ----- Navigation ----- */
-  const pages = ["home", "look", "about"];
+  const pages = ["home", "look", "extensions", "about"];
   function go(page) {
     $$(".nav-item").forEach((b) => b.classList.toggle("on", b.dataset.page === page));
     $$(".page").forEach((p) => p.classList.toggle("on", p.id === "page-" + page));
@@ -833,7 +925,8 @@
     const o = state.options;
     $("#nowStyle").textContent = styleLabel();
     $("#sumMode").textContent = state.scheme === "dark" ? "Dark" : "Light";
-    $("#sumAccent").textContent = ACCENTS[state.accent].name;
+    $("#sumAccent").textContent = o.adaptive ? "Song colors" : ACCENTS[state.accent].name;
+    $(".summary .chip-dot").classList.toggle("rainbow-dot", !!o.adaptive);
     $("#sumArt").textContent = o.art ? o.art + "%" : "Off";
     $("#sumRadius").textContent = o.radius + " px";
     $("#sumPlayer").textContent = o.floating ? "Floating" : "Docked";
@@ -852,6 +945,9 @@
     }
     $("#floating").setAttribute("aria-checked", o.floating);
     $("#floatingSwitch").classList.toggle("on", o.floating);
+    $("#adaptive").setAttribute("aria-checked", !!o.adaptive);
+    $("#adaptiveSwitch").classList.toggle("on", !!o.adaptive);
+    $("#swatches").classList.toggle("muted", !!o.adaptive);
     const preset = currentPreset();
     $$(".preset").forEach((b) => {
       b.classList.toggle("on", b.dataset.preset === preset);
@@ -862,13 +958,14 @@
   }
 
   function snapshot() {
-    return JSON.stringify([state.scheme, state.accent, state.options.art, state.options.radius, state.options.floating, state.options.pattern]);
+    const o = state.options;
+    return JSON.stringify([state.scheme, state.accent, o.art, o.radius, o.floating, o.pattern, !!o.adaptive]);
   }
   function currentPreset() {
     const now = snapshot();
     for (const [id, p] of Object.entries(PRESETS)) {
       const o = p.options;
-      if (JSON.stringify([p.scheme, p.accent, o.art, o.radius, o.floating, o.pattern]) === now) return id;
+      if (JSON.stringify([p.scheme, p.accent, o.art, o.radius, o.floating, o.pattern, !!o.adaptive]) === now) return id;
     }
     return null;
   }
@@ -911,6 +1008,7 @@
   $("#art").oninput = (e) => { state.options.art = Number(e.target.value); sync(); };
   $("#radius").oninput = (e) => { state.options.radius = Number(e.target.value); sync(); };
   $("#floating").onclick = () => { state.options.floating = !state.options.floating; sync(); };
+  $("#adaptive").onclick = () => { state.options.adaptive = !state.options.adaptive; sync(); };
   for (const [id, pat] of Object.entries(PATTERNS)) {
     const b = document.createElement("button");
     b.className = "pat";
@@ -996,6 +1094,17 @@
     $("#applyTile").classList.toggle("busy", state.busy);
     $("#eyebrow").textContent = "Harmonie " + s.version;
     $("#appVersion").textContent = s.version;
+    const on = s.extensions || [];
+    $$("[data-ext]").forEach((card) => {
+      const active = on.includes(card.dataset.ext);
+      const chip = card.querySelector("[data-state]");
+      chip.textContent = active ? "On" : "Off";
+      chip.classList.toggle("on", active);
+      const btn = card.querySelector("[data-toggle]");
+      btn.className = active ? "ghost danger-text" : "primary";
+      btn.querySelector("span").textContent = active ? "Remove" : "Add";
+      btn.disabled = state.busy;
+    });
     $("#spicetifyBanner").hidden = !!s.spicetify;
     $("#spicetifyUpdateBanner").hidden = !outdated;
     if (outdated) $("#spicetifyUpdateText").textContent = `Spicetify ${spicetifyLatest} is available (you have ${s.spicetify}).`;
@@ -1013,7 +1122,7 @@
     }
     if (s.active) {
       const o = { ...DEFAULTS, ...(s.options || {}) };
-      applied = JSON.stringify([s.scheme, ACCENTS[s.accent] ? s.accent : "rose", o.art, o.radius, o.floating, o.pattern]);
+      applied = JSON.stringify([s.scheme, ACCENTS[s.accent] ? s.accent : "rose", o.art, o.radius, o.floating, o.pattern, !!o.adaptive]);
     } else {
       applied = null;
     }
@@ -1021,6 +1130,17 @@
     render();
     if (first && pages.includes(state.status.start_page)) go(state.status.start_page);
     if (first) {
+      const seen = pref("harmonie-seen-version");
+      // Show it after an update; before 3.5.1 nothing was saved, so an installed theme means an update too.
+      if (seen ? seen !== s.version : s.installed) {
+        $("#whatsNewTitle").textContent = `New in Harmonie ${s.version}`;
+        $("#whatsNew").hidden = false;
+      }
+      if (!seen && !s.installed) pref("harmonie-seen-version", s.version);
+      $("#hideWhatsNew").onclick = () => {
+        pref("harmonie-seen-version", s.version);
+        $("#whatsNew").hidden = true;
+      };
       checkForUpdate(state.status.version);
       latestSpicetify().then(render);
     }
@@ -1140,6 +1260,30 @@
   $("#install").onclick = () => doInstall($("#install"));
   $("#apply").onclick = () => doInstall($("#apply"));
   $("#remove").onclick = () => run($("#remove"), "Removing…", "uninstall", {}, "Theme removed. Your previous theme is back.");
+
+  $$("[data-ext]").forEach((card) => {
+    const btn = card.querySelector("[data-toggle]");
+    const name = card.querySelector(".ext-head b").textContent;
+    btn.onclick = async () => {
+      if (state.busy) return;
+      const active = (state.status && state.status.extensions || []).includes(card.dataset.ext);
+      if (!active) {
+        // Spicetify must be there first.
+        try {
+          state.busy = true;
+          render();
+          await ensureSpicetify((text) => (btn.querySelector("span").textContent = text));
+        } catch (e) {
+          notify(errorLines(e), true);
+          state.busy = false;
+          return refresh();
+        }
+        state.busy = false;
+      }
+      run(btn, active ? "Removing…" : "Adding…", active ? "remove_extension" : "add_extension", { id: card.dataset.ext },
+        active ? `${name} removed.` : `${name} added.`, active ? null : { label: "Open Spotify", run: openSpotify });
+    };
+  });
 
   $("#hideStore").onclick = () => {
     pref("harmonie-hide-store", "1");

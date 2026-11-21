@@ -28,8 +28,10 @@
 - **Background patterns** — waves, dots, lines or rings, softly showing through the glass (or none)
 - **Floating player** — the bottom player becomes a rounded glass card (or stays docked, your choice)
 - **5 accent colors** — rose, violet, blue, green, orange, in dark and light (10 schemes)
+- **Song colors** — optional: the accent takes the color of each song's cover, like Apple Music
 - **Your own look** — tune the album art strength, corners, player style and pattern with a live preview
-- **Presets** — Harmonie, Midnight, Sunset, Studio and Daylight in one click
+- **Presets** — Harmonie, Midnight, Sunset, Studio, Daylight and Vivid in one click
+- **Extensions** — add Volume Percentage (ohitstom) and Section Marker (Aimarekin) in one click; each is downloaded from its author's repository and keeps its own license
 - **Small touches** — accent edge on hovered tracks, accent keyboard focus, pages that fade in, rounded tooltips
 - **Survives Spotify updates** — the app repairs Spicetify's backup when Spotify updates
 - **Handles Spicetify for you** — installs it if missing, updates it if outdated, repairs it if applying fails, and opens a terminal with the fix as a last resort
@@ -72,6 +74,7 @@ To change the look by hand, edit the **Options** block at the top of `user.css`:
 --harmonie-player-radius: 20px;
 --harmonie-pattern: var(--harmonie-pattern-waves); /* waves, dots, lines, rings or none */
 --harmonie-pattern-opacity: 0.1;  /* set to 0 with "none" */
+--harmonie-adaptive: 0;           /* 1: accent follows the song's cover */
 ```
 
 ## Screenshots

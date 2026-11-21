@@ -23,9 +23,32 @@ const PREVIOUS_FILE: &str = ".harmonie-previous";
 /// Accent ids. "rose" is the plain `dark` / `light` scheme; the others are `dark-<id>` / `light-<id>`.
 const ACCENTS: &[&str] = &["rose", "violet", "blue", "green", "orange"];
 
+/// Extensions Harmonie can add. The code is downloaded from each author's own
+/// repository when the person adds it; Harmonie does not ship it.
+struct Extension {
+    id: &'static str,
+    file: &'static str,
+    url: &'static str,
+}
+
+const EXTENSIONS: &[Extension] = &[
+    Extension {
+        id: "volume-percentage",
+        file: "volumePercentage.js",
+        url: "https://raw.githubusercontent.com/ohitstom/spicetify-extensions/main/volumePercentage/volumePercentage.js",
+    },
+    Extension {
+        id: "section-marker",
+        file: "section-marker.js",
+        url: "https://raw.githubusercontent.com/Aimarekin/Aimarekins-Spicetify-Extensions/main/_dist/section-marker.js",
+    },
+];
+
 /// Links the app is allowed to open in the browser.
 const LINKS: &[&str] = &[
     "https://spicetify.app",
+    "https://github.com/ohitstom/spicetify-extensions",
+    "https://github.com/Aimarekin/Aimarekins-Spicetify-Extensions",
     "https://github.com/Kehazy/harmonie",
 ];
 
@@ -71,11 +94,14 @@ struct Options {
     /// Background pattern. Older app versions do not send it.
     #[serde(default)]
     pattern: Pattern,
+    /// Accent color follows the current song's cover.
+    #[serde(default)]
+    adaptive: bool,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Options { art: 42, radius: 14, floating: true, pattern: Pattern::Waves }
+        Options { art: 42, radius: 14, floating: true, pattern: Pattern::Waves, adaptive: false }
     }
 }
 
@@ -110,6 +136,10 @@ impl Options {
             format!(
                 "  --harmonie-pattern-opacity: {};",
                 if self.pattern == Pattern::None { "0" } else { "0.1" }
+            ),
+            format!(
+                "  --harmonie-adaptive: {}; /* 1: accent follows the song's cover */",
+                if self.adaptive { 1 } else { 0 }
             ),
             "}".into(),
             OPTIONS_END.to_string(),
@@ -146,6 +176,7 @@ impl Options {
             radius: var("radius").map_or(d.radius, |v| v as u8),
             floating: var("player-gap").map_or(d.floating, |v| v > 0.0),
             pattern: pattern.unwrap_or(d.pattern),
+            adaptive: var("adaptive").map_or(d.adaptive, |v| v >= 1.0),
         }
         .clamped()
     }
@@ -161,6 +192,8 @@ struct Status {
     accent: String,
     current_theme: String,
     options: Options,
+    /// Ids of the Harmonie extensions that are turned on.
+    extensions: Vec<&'static str>,
     /// Page to open first, from HARMONIE_PAGE (used to take screenshots).
     start_page: Option<String>,
     /// Spotify from the Microsoft Store, which Spicetify does not fully support.
@@ -358,6 +391,7 @@ async fn status() -> Status {
         accent: "rose".into(),
         current_theme: String::new(),
         options: Options::default(),
+        extensions: Vec::new(),
         start_page: env::var("HARMONIE_PAGE").ok(),
         store_spotify: false,
     };
@@ -375,6 +409,12 @@ async fn status() -> Status {
             s.accent = accent;
         }
         s.store_spotify = read_setting(&dir, "spotify_path").contains("WindowsApps");
+        let enabled = enabled_extensions(&read_setting(&dir, "extensions"));
+        s.extensions = EXTENSIONS
+            .iter()
+            .filter(|e| enabled.iter().any(|f| f == e.file))
+            .map(|e| e.id)
+            .collect();
     }
     s
 }
@@ -500,6 +540,53 @@ async fn create_shortcut() -> Result<String, String> {
     } else {
         Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
     }
+}
+
+/// Spicetify's `extensions` setting is a `|`-separated list of file names.
+fn enabled_extensions(setting: &str) -> Vec<String> {
+    setting
+        .split('|')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(String::from)
+        .collect()
+}
+
+/// Adds an extension: downloads it from its author's repository into
+/// Spicetify's Extensions folder, turns it on and applies.
+#[tauri::command]
+async fn add_extension(id: String) -> Result<String, String> {
+    let ext = EXTENSIONS.iter().find(|e| e.id == id).ok_or("Unknown extension.")?;
+    let dir = config_dir()?.join("Extensions");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let target = dir.join(ext.file);
+    // The URL and path go in through environment variables, never the script text.
+    let script = "$ProgressPreference = 'SilentlyContinue'; \
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
+        Invoke-WebRequest -Uri $env:HARMONIE_URL -OutFile $env:HARMONIE_OUT -UseBasicParsing -Headers @{ 'User-Agent' = 'Harmonie' }";
+    let out = command("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-EncodedCommand", &encode_powershell(script)])
+        .env("HARMONIE_URL", ext.url)
+        .env("HARMONIE_OUT", &target)
+        .output()
+        .map_err(|e| format!("Could not start PowerShell: {e}"))?;
+    if !out.status.success() || !target.exists() {
+        let stderr = String::from_utf8_lossy(&out.stderr);
+        return Err(friendly(&format!("The extension could not be downloaded.\n{}", stderr.trim())));
+    }
+    spicetify(&["config", "extensions", ext.file]).map_err(|e| friendly(&e))?;
+    apply().map_err(|e| friendly(&e))
+}
+
+/// Turns an extension off, applies, and deletes its file.
+#[tauri::command]
+async fn remove_extension(id: String) -> Result<String, String> {
+    let ext = EXTENSIONS.iter().find(|e| e.id == id).ok_or("Unknown extension.")?;
+    let dir = config_dir()?;
+    spicetify(&["config", "extensions", &format!("{}-", ext.file)]).map_err(|e| friendly(&e))?;
+    let log = apply().map_err(|e| friendly(&e))?;
+    let _ = fs::remove_file(dir.join("Extensions").join(ext.file));
+    Ok(log)
 }
 
 /// PowerShell's -EncodedCommand takes the script as base64 of UTF-16LE, which
@@ -645,6 +732,8 @@ fn main() {
             uninstall,
             create_shortcut,
             install_spicetify,
+            add_extension,
+            remove_extension,
             repair,
             open_fix_terminal,
             open_spotify,
@@ -664,11 +753,13 @@ mod tests {
         assert_eq!((defaults.art, defaults.radius, defaults.floating), (42, 14, true));
         assert_eq!(defaults.pattern, Pattern::Waves);
 
-        let o = Options { art: 20, radius: 6, floating: false, pattern: Pattern::Rings };
+        let o = Options { art: 20, radius: 6, floating: false, pattern: Pattern::Rings, adaptive: true };
         let css = o.apply_to(USER_CSS);
         let back = Options::parse(&css);
         assert_eq!((back.art, back.radius, back.floating), (20, 6, false));
         assert_eq!(back.pattern, Pattern::Rings);
+        assert!(back.adaptive);
+        assert!(!defaults.adaptive);
         assert!(css.contains("--harmonie-player-gap: 0px;"));
         // Only the options block changes.
         assert_eq!(css.matches(OPTIONS_START).count(), 1);
@@ -677,7 +768,7 @@ mod tests {
 
     #[test]
     fn options_are_clamped() {
-        let o = Options { art: 200, radius: 99, floating: true, pattern: Pattern::Dots }.clamped();
+        let o = Options { art: 200, radius: 99, floating: true, pattern: Pattern::Dots, adaptive: false }.clamped();
         assert_eq!((o.art, o.radius), (80, 24));
         assert_eq!(o.pattern, Pattern::Dots);
     }
@@ -697,6 +788,7 @@ mod tests {
     fn old_apps_without_pattern_still_work() {
         let o: Options = serde_json::from_str(r#"{"art":30,"radius":10,"floating":true}"#).unwrap();
         assert_eq!(o.pattern, Pattern::Waves);
+        assert!(!o.adaptive);
     }
 
     #[test]
@@ -739,6 +831,26 @@ mod tests {
         assert!(INSTALL_SPICETIFY_PS1.contains("api.github.com/repos/spicetify/cli/releases/latest"));
         assert!(INSTALL_SPICETIFY_PS1.contains("spicetify-$version-windows-$arch.zip"));
         assert!(!INSTALL_SPICETIFY_PS1.contains("iex"), "no remote script execution");
+    }
+
+    #[test]
+    fn reads_the_extensions_setting() {
+        assert_eq!(enabled_extensions(""), Vec::<String>::new());
+        assert_eq!(
+            enabled_extensions("fullAppDisplay.js|volumePercentage.js"),
+            vec!["fullAppDisplay.js", "volumePercentage.js"]
+        );
+        assert_eq!(enabled_extensions(" a.js | "), vec!["a.js"]);
+    }
+
+    #[test]
+    fn extensions_come_from_their_authors_and_are_linkable() {
+        for e in EXTENSIONS {
+            assert!(e.url.starts_with("https://raw.githubusercontent.com/"), "{}", e.id);
+            assert!(e.url.ends_with(e.file), "{}", e.id);
+        }
+        assert!(LINKS.iter().any(|l| l.contains("ohitstom")));
+        assert!(LINKS.iter().any(|l| l.contains("Aimarekin")));
     }
 
     #[test]

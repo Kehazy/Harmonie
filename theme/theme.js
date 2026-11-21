@@ -47,6 +47,83 @@
   P.addEventListener("songchange", update);
   update();
 
+  /* ----- Song colors: the accent follows the current cover ----- */
+  const ACCENT_VARS = ["--spice-button", "--spice-button-active", "--spice-rgb-button", "--spice-notification"];
+
+  function adaptiveOn() {
+    return getComputedStyle(root).getPropertyValue("--harmonie-adaptive").trim() === "1";
+  }
+
+  function isLightTheme() {
+    const rgb = getComputedStyle(root).getPropertyValue("--spice-rgb-main").split(",").map(Number);
+    return rgb.length === 3 && rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114 > 150;
+  }
+
+  function hexToHsl(hex) {
+    const n = parseInt(hex.replace("#", ""), 16);
+    const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    if (max === min) return [0, 0, l];
+    const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [h * 60, s, l];
+  }
+
+  function hslToRgb(h, s, l) {
+    const k = (n) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return [f(0), f(8), f(4)].map((v) => Math.round(v * 255));
+  }
+
+  const toHex = (rgb) => "#" + rgb.map((v) => v.toString(16).padStart(2, "0")).join("");
+
+  // Keep the color readable: vivid enough, and light or dark enough for the mode.
+  // Returns null for grey covers, which have no real hue to follow.
+  function tune(hex) {
+    let [h, s, l] = hexToHsl(hex);
+    if (s < 0.12) return null;
+    s = Math.max(s, 0.45);
+    const [lo, hi] = isLightTheme() ? [0.36, 0.5] : [0.55, 0.68];
+    l = Math.min(Math.max(l, lo), hi);
+    return { main: hslToRgb(h, s, l), active: hslToRgb(h, s, Math.min(l + 0.08, 0.8)) };
+  }
+
+  function clearAdaptive() {
+    ACCENT_VARS.forEach((v) => root.style.removeProperty(v));
+    root.classList.remove("harmonie-adaptive");
+  }
+
+  let colorRequest = 0;
+  async function adapt() {
+    if (!adaptiveOn() || typeof Spicetify.colorExtractor !== "function") return clearAdaptive();
+    const item = P.data && (P.data.item || P.data.track);
+    const uri = item && item.uri;
+    if (!uri) return;
+    const request = ++colorRequest;
+    try {
+      const colors = await Spicetify.colorExtractor(uri);
+      if (request !== colorRequest) return; // a newer song won
+      const hex = colors && (colors.VIBRANT_NON_ALARMING || colors.VIBRANT || colors.PROMINENT);
+      const tuned = hex && tune(hex);
+      // No usable color for this song: go back to the chosen accent.
+      if (!tuned) return clearAdaptive();
+      const { main, active } = tuned;
+      root.style.setProperty("--spice-button", toHex(main));
+      root.style.setProperty("--spice-button-active", toHex(active));
+      root.style.setProperty("--spice-rgb-button", main.join(","));
+      root.style.setProperty("--spice-notification", toHex(main));
+      root.classList.add("harmonie-adaptive");
+    } catch (_) {
+      // Offline or not available: keep the chosen accent.
+    }
+  }
+
+  P.addEventListener("songchange", adapt);
+  adapt();
+
   /* ----- Harmonie wave: three sine waves along the top of the player ----- */
   const NS = "http://www.w3.org/2000/svg";
 
